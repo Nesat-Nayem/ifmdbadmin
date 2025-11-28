@@ -112,18 +112,18 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'bx:music',
     label: 'Events',
     children: [
-      // {
-      //   key: 'events-category-add',
-      //   label: 'Create Category',
-      //   url: '/events/category-add',
-      //   parentKey: 'events',
-      // },
-      // {
-      //   key: 'events-category-list',
-      //   label: 'Category List',
-      //   url: '/events/category-list',
-      //   parentKey: 'events',
-      // },
+      {
+        key: 'events-category-add',
+        label: 'Create Category',
+        url: '/events/category-add',
+        parentKey: 'events',
+      },
+      {
+        key: 'events-category-list',
+        label: 'Category List',
+        url: '/events/category-list',
+        parentKey: 'events',
+      },
       {
         key: 'events-list-add',
         label: 'Events Add',
