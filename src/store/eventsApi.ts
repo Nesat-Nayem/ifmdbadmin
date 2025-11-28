@@ -25,12 +25,21 @@ export interface IOrganizer {
   logo: string
 }
 
+export interface ISeatType {
+  name: string
+  price: number
+  totalSeats: number
+  availableSeats: number
+}
+
 export interface IEvents {
   _id: string
   title: string
   description: string
   eventType: string
   category: string
+  categoryId?: string
+  language: string
   startDate: string
   endDate: string
   startTime: string
@@ -39,6 +48,9 @@ export interface IEvents {
   ticketPrice: number
   totalSeats: number
   availableSeats: number
+  seatTypes: ISeatType[]
+  maxTicketsPerPerson: number
+  totalTicketsSold: number
   posterImage: string
   galleryImages: string[]
   performers: IPerformer[]
@@ -116,7 +128,60 @@ export const eventsApi = createApi({
       transformResponse: (response: EventsResponse) => response.data as IEvents,
       invalidatesTags: ['Events'],
     }),
+
+    // Get best events this week
+    getBestEventsThisWeek: builder.query<IEvents[], { page?: number; limit?: number } | void>({
+      query: (params) => {
+        let url = '/events/best-this-week'
+        if (params) {
+          const queryParams = new URLSearchParams()
+          if (params.page) queryParams.append('page', String(params.page))
+          if (params.limit) queryParams.append('limit', String(params.limit))
+          if (queryParams.toString()) url += `?${queryParams.toString()}`
+        }
+        return url
+      },
+      transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
+      providesTags: ['Events'],
+    }),
+
+    // Get events by category
+    getEventsByCategory: builder.query<IEvents[], { categoryId: string; page?: number; limit?: number }>({
+      query: ({ categoryId, page, limit }) => {
+        let url = `/events/category/${categoryId}`
+        const queryParams = new URLSearchParams()
+        if (page) queryParams.append('page', String(page))
+        if (limit) queryParams.append('limit', String(limit))
+        if (queryParams.toString()) url += `?${queryParams.toString()}`
+        return url
+      },
+      transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
+      providesTags: ['Events'],
+    }),
+
+    // Get events by language
+    getEventsByLanguage: builder.query<IEvents[], { language: string; page?: number; limit?: number }>({
+      query: ({ language, page, limit }) => {
+        let url = `/events/language/${language}`
+        const queryParams = new URLSearchParams()
+        if (page) queryParams.append('page', String(page))
+        if (limit) queryParams.append('limit', String(limit))
+        if (queryParams.toString()) url += `?${queryParams.toString()}`
+        return url
+      },
+      transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
+      providesTags: ['Events'],
+    }),
   }),
 })
 
-export const { useGetEventsQuery, useGetEventsByIdQuery, useCreateEventsMutation, useUpdateEventsMutation, useDeleteEventsMutation } = eventsApi
+export const { 
+  useGetEventsQuery, 
+  useGetEventsByIdQuery, 
+  useCreateEventsMutation, 
+  useUpdateEventsMutation, 
+  useDeleteEventsMutation,
+  useGetBestEventsThisWeekQuery,
+  useGetEventsByCategoryQuery,
+  useGetEventsByLanguageQuery,
+} = eventsApi

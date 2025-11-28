@@ -1,6 +1,8 @@
 'use client'
 
 import { useCreateEventsMutation } from '@/store/eventsApi'
+import { useGetEventCategoriesQuery, IEventCategory } from '@/store/eventCategoryApi'
+import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
@@ -9,13 +11,22 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
-import { log } from 'console'
+
+// Seat Type Interface
+interface ISeatType {
+  name: string
+  price: number
+  totalSeats: number
+  availableSeats: number
+}
 
 const schema = yup.object().shape({
   title: yup.string().required('Please enter title'),
   description: yup.string().required('Please enter description'),
   eventType: yup.string().required('Please select event type'),
   category: yup.string().required('Please select category'),
+  categoryId: yup.string().optional(),
+  language: yup.string().required('Please select language'),
   startDate: yup.string().required('Start date required'),
   endDate: yup.string().required('End date required'),
   startTime: yup.string().required('Start time required'),
@@ -31,6 +42,7 @@ const schema = yup.object().shape({
   ticketPrice: yup.number().typeError('Enter valid price').required('Ticket price required'),
   totalSeats: yup.number().typeError('Enter valid number').required('Total seats required'),
   availableSeats: yup.number().typeError('Enter valid number').required('Available seats required'),
+  maxTicketsPerPerson: yup.number().typeError('Enter valid number').default(10),
   tagsInput: yup.string().required('Tags required'),
 })
 
@@ -40,6 +52,7 @@ type FormValues = yup.InferType<typeof schema> & {
   performers?: string[]
   organizers?: string[]
   tags?: string[]
+  seatTypes?: ISeatType[]
 }
 
 const EventsAdd = () => {
@@ -47,19 +60,66 @@ const EventsAdd = () => {
   const [galleryImages, setGalleryImages] = useState<File[]>([])
   const router = useRouter()
 
-  // ✅ Toast state
+  // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
+
+  // Seat Types state
+  const [seatTypes, setSeatTypes] = useState<ISeatType[]>([
+    { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
+  ])
+
+  // Fetch event categories
+  const { data: eventCategories = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
+  const [uploadSingle] = useUploadSingleMutation()
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      language: 'English',
+      maxTicketsPerPerson: 10,
+    }
   })
+
+  // Watch category to auto-set categoryId
+  const selectedCategory = watch('category')
+
+  // Add seat type
+  const addSeatType = () => {
+    setSeatTypes([...seatTypes, { name: '', price: 0, totalSeats: 0, availableSeats: 0 }])
+  }
+
+  // Remove seat type
+  const removeSeatType = (index: number) => {
+    if (seatTypes.length > 1) {
+      setSeatTypes(seatTypes.filter((_, i) => i !== index))
+    }
+  }
+
+  // Handle seat type change
+  const handleSeatTypeChange = (index: number, field: keyof ISeatType, value: string | number) => {
+    setSeatTypes(prev => {
+      const updated = [...prev]
+      if (field === 'name') {
+        updated[index] = { ...updated[index], [field]: value as string }
+      } else {
+        updated[index] = { ...updated[index], [field]: Number(value) }
+        // Auto-set availableSeats to totalSeats for new entries
+        if (field === 'totalSeats') {
+          updated[index].availableSeats = Number(value)
+        }
+      }
+      return updated
+    })
+  }
 
   // Performers
   const [performers, setPerformers] = useState([{ name: '', type: '', bio: '', image: null }])
@@ -104,55 +164,82 @@ const EventsAdd = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
+      // Upload poster image first
+      let posterImageUrl = ''
+      if (poster) {
+        try {
+          posterImageUrl = await uploadSingle(poster).unwrap()
+        } catch (uploadErr) {
+          // Fallback to blob URL if upload fails
+          posterImageUrl = URL.createObjectURL(poster)
+        }
+      }
+
+      // Upload gallery images
+      const galleryImageUrls: string[] = []
+      for (const file of galleryImages) {
+        try {
+          const url = await uploadSingle(file).unwrap()
+          galleryImageUrls.push(url)
+        } catch (uploadErr) {
+          galleryImageUrls.push(URL.createObjectURL(file))
+        }
+      }
+
+      // Find categoryId from selected category name
+      const selectedCat = eventCategories.find((cat: IEventCategory) => cat.name === values.category)
+
+      // Filter out empty seat types
+      const validSeatTypes = seatTypes.filter(st => st.name.trim() !== '' && st.totalSeats > 0)
+
       const payload = {
         ...values,
+        categoryId: selectedCat?._id || undefined,
         location: {
           venueName: values.venueName,
           address: values.address,
           city: values.city,
           state: values.state,
-
           postalCode: values.postalCode,
           latitude: values.latitude || 0,
           longitude: values.longitude || 0,
         },
-        // ✅ Use state for images
-        posterImage: poster ? URL.createObjectURL(poster) : '',
-        galleryImages: galleryImages.map((file) => URL.createObjectURL(file)),
-        performers: performers.map((p) => ({
+        posterImage: posterImageUrl,
+        galleryImages: galleryImageUrls,
+        seatTypes: validSeatTypes,
+        performers: performers.filter(p => p.name.trim() !== '').map((p) => ({
           name: p.name,
           type: p.type,
           bio: p.bio,
           image: p.image ? URL.createObjectURL(p.image) : '',
         })),
-        organizers: organizers.map((p) => ({
-          name: p.name,
-          email: p.email,
-          phone: p.phone,
-          logo: p.logo ? URL.createObjectURL(p.logo) : '',
+        organizers: organizers.filter(o => o.name.trim() !== '').map((o) => ({
+          name: o.name,
+          email: o.email,
+          phone: o.phone,
+          logo: o.logo ? URL.createObjectURL(o.logo) : '',
         })),
-
         tags: values.tagsInput
           .split(',')
           .map((t: string) => t.trim())
           .filter((t: string) => t.length > 0),
-
         isActive: true,
       }
 
       await createEvents(payload).unwrap()
 
-      showMessage('Events added successfully!', 'success')
+      showMessage('Event added successfully!', 'success')
       reset()
       setPoster(null)
       setGalleryImages([])
-      // wait 2 seconds before redirect
+      setSeatTypes([{ name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }])
+      
       setTimeout(() => {
         router.push('/events/events-list')
       }, 2000)
     } catch (err) {
       console.error('Error:', err)
-      showMessage('Failed to add Events', 'error')
+      showMessage('Failed to add Event', 'error')
     }
   }
 
@@ -210,9 +297,38 @@ const EventsAdd = () => {
                 </Col>
 
                 <Col lg={6} className="mt-3">
-                  <label className="form-label">Category</label>
-                  <input type="text" {...register('category')} className="form-control" />
+                  <label className="form-label">Category *</label>
+                  <select {...register('category')} className="form-select">
+                    <option value="">-- Select Category --</option>
+                    {categoriesLoading ? (
+                      <option disabled>Loading categories...</option>
+                    ) : (
+                      eventCategories.map((cat: IEventCategory) => (
+                        <option key={cat._id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
                   {errors.category && <small className="text-danger">{errors.category.message}</small>}
+                </Col>
+
+                <Col lg={6} className="mt-3">
+                  <label className="form-label">Language *</label>
+                  <select {...register('language')} className="form-select">
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Telugu">Telugu</option>
+                    <option value="Malayalam">Malayalam</option>
+                    <option value="Tamil">Tamil</option>
+                    <option value="Kannada">Kannada</option>
+                    <option value="Bengali">Bengali</option>
+                    <option value="Marathi">Marathi</option>
+                    <option value="Gujarati">Gujarati</option>
+                    <option value="Punjabi">Punjabi</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  {errors.language && <small className="text-danger">{errors.language.message}</small>}
                 </Col>
 
                 {/* Dates and Times */}
@@ -296,22 +412,97 @@ const EventsAdd = () => {
             </CardHeader>
             <CardBody>
               <Row>
-                <Col lg={4}>
-                  <label className="form-label">Ticket Price</label>
-                  <input type="number" {...register('ticketPrice')} className="form-control" />
+                <Col lg={3}>
+                  <label className="form-label">Base Ticket Price *</label>
+                  <input type="number" {...register('ticketPrice')} className="form-control" placeholder="0" />
                   {errors.ticketPrice && <small className="text-danger">{errors.ticketPrice.message}</small>}
                 </Col>
-                <Col lg={4}>
-                  <label className="form-label">Total Seats</label>
-                  <input type="number" {...register('totalSeats')} className="form-control" />
+                <Col lg={3}>
+                  <label className="form-label">Total Seats *</label>
+                  <input type="number" {...register('totalSeats')} className="form-control" placeholder="100" />
                   {errors.totalSeats && <small className="text-danger">{errors.totalSeats.message}</small>}
                 </Col>
-                <Col lg={4}>
-                  <label className="form-label">Available Seats</label>
-                  <input type="number" {...register('availableSeats')} className="form-control" />
+                <Col lg={3}>
+                  <label className="form-label">Available Seats *</label>
+                  <input type="number" {...register('availableSeats')} className="form-control" placeholder="100" />
                   {errors.availableSeats && <small className="text-danger">{errors.availableSeats.message}</small>}
                 </Col>
+                <Col lg={3}>
+                  <label className="form-label">Max Tickets/Person</label>
+                  <input type="number" {...register('maxTicketsPerPerson')} className="form-control" defaultValue={10} />
+                  {errors.maxTicketsPerPerson && <small className="text-danger">{errors.maxTicketsPerPerson.message}</small>}
+                </Col>
               </Row>
+            </CardBody>
+          </Card>
+
+          {/* Seat Types */}
+          <Card className="mt-4">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <CardTitle as="h4">Seat Types (VIP, VVIP, Normal, etc.)</CardTitle>
+              <button type="button" className="btn btn-sm btn-outline-primary" onClick={addSeatType}>
+                + Add Seat Type
+              </button>
+            </CardHeader>
+            <CardBody>
+              <p className="text-muted mb-3">
+                <small>Configure different seat types with their prices. Leave empty if you only have one ticket price.</small>
+              </p>
+              {seatTypes.map((seatType, index) => (
+                <Row key={`seatType-${index}`} className="align-items-end mb-3">
+                  <Col lg={3}>
+                    <label className="form-label">Seat Type Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={seatType.name}
+                      onChange={(e) => handleSeatTypeChange(index, 'name', e.target.value)}
+                      placeholder="e.g. VIP, VVIP, Normal"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Price</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={seatType.price}
+                      onChange={(e) => handleSeatTypeChange(index, 'price', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Total Seats</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={seatType.totalSeats}
+                      onChange={(e) => handleSeatTypeChange(index, 'totalSeats', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Available Seats</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={seatType.availableSeats}
+                      onChange={(e) => handleSeatTypeChange(index, 'availableSeats', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={1}>
+                    {seatTypes.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger w-100"
+                        onClick={() => removeSeatType(index)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </Col>
+                </Row>
+              ))}
             </CardBody>
           </Card>
 

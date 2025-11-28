@@ -18,6 +18,7 @@ import { generalSettingsApi } from './generalSettingsApi'
 import { subscriptionPlanApi } from './subscriptionPlanApi'
 import { movieCategoryApi } from './movieCategory'
 import { uploadApi } from './uploadApi'
+import { eventCategoryApi } from './eventCategoryApi'
 
 export const store = configureStore({
   reducer: {
@@ -40,6 +41,7 @@ export const store = configureStore({
     [subscriptionPlanApi.reducerPath]: subscriptionPlanApi.reducer,
     [movieCategoryApi.reducerPath]: movieCategoryApi.reducer,
     [uploadApi.reducerPath]: uploadApi.reducer,
+    [eventCategoryApi.reducerPath]: eventCategoryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -63,6 +65,7 @@ export const store = configureStore({
       subscriptionPlanApi.middleware,
       movieCategoryApi.middleware,
       uploadApi.middleware,
+      eventCategoryApi.middleware,
     ),
 })
 

@@ -115,8 +115,22 @@ const EventsList = () => {
                       </td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <div className="rounded bg-light avatar-md d-flex align-items-center justify-content-center">
-                            <Image src={event.posterImage || '/placeholder.png'} alt={event.title} width={60} height={60} className="rounded" />
+                          <div className="rounded bg-light avatar-md d-flex align-items-center justify-content-center overflow-hidden">
+                            {event.posterImage ? (
+                              <img 
+                                src={event.posterImage} 
+                                alt={event.title} 
+                                width={60} 
+                                height={60} 
+                                className="rounded"
+                                style={{ objectFit: 'cover', width: '60px', height: '60px' }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/placeholder.png'
+                                }}
+                              />
+                            ) : (
+                              <Image src="/placeholder.png" alt={event.title} width={60} height={60} className="rounded" />
+                            )}
                           </div>
                         </div>
                       </td>
