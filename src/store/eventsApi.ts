@@ -39,7 +39,7 @@ export interface IEvents {
   eventType: string
   category: string
   categoryId?: string
-  language: string
+  eventLanguage: string
   startDate: string
   endDate: string
   startTime: string
@@ -108,14 +108,17 @@ export const eventsApi = createApi({
       invalidatesTags: ['Events'],
     }),
 
-    updateEvents: builder.mutation<IEvents, { id: string; data: FormData }>({
-      query: ({ id, data }) => ({
-        url: `events/${id}`,
-        method: 'PUT',
-        body: data, // FormData
-        // DO NOT set headers: { 'Content-Type': 'multipart/form-data' }
-        // let the browser handle it
-      }),
+    updateEvents: builder.mutation<IEvents, { id: string; data: Partial<IEvents> | FormData }>({
+      query: ({ id, data }) => {
+        // Check if data is FormData or JSON
+        const isFormData = data instanceof FormData
+        return {
+          url: `events/${id}`,
+          method: 'PUT',
+          body: data,
+          headers: isFormData ? undefined : { 'Content-Type': 'application/json' },
+        }
+      },
       transformResponse: (response: EventsResponse) => response.data as IEvents,
       invalidatesTags: (result, error, { id }) => [{ type: 'Events', id }, 'Events'],
     }),
@@ -160,9 +163,9 @@ export const eventsApi = createApi({
     }),
 
     // Get events by language
-    getEventsByLanguage: builder.query<IEvents[], { language: string; page?: number; limit?: number }>({
-      query: ({ language, page, limit }) => {
-        let url = `/events/language/${language}`
+    getEventsByLanguage: builder.query<IEvents[], { eventLanguage: string; page?: number; limit?: number }>({
+      query: ({ eventLanguage, page, limit }) => {
+        let url = `/events/language/${eventLanguage}`
         const queryParams = new URLSearchParams()
         if (page) queryParams.append('page', String(page))
         if (limit) queryParams.append('limit', String(limit))

@@ -6,7 +6,7 @@ import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
-import { Button, Card, CardBody, CardHeader, CardTitle, Col, Container, Row, Toast, ToastContainer } from 'react-bootstrap'
+import { Button, Card, CardBody, CardHeader, CardTitle, Col, Container, Row, Spinner, Toast, ToastContainer, ProgressBar } from 'react-bootstrap'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
@@ -26,7 +26,7 @@ const schema = yup.object().shape({
   eventType: yup.string().required('Please select event type'),
   category: yup.string().required('Please select category'),
   categoryId: yup.string().optional(),
-  language: yup.string().required('Please select language'),
+  eventLanguage: yup.string().required('Please select language'),
   startDate: yup.string().required('Start date required'),
   endDate: yup.string().required('End date required'),
   startTime: yup.string().required('Start time required'),
@@ -65,6 +65,12 @@ const EventsAdd = () => {
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
 
+  // Upload loading states
+  const [isUploadingPoster, setIsUploadingPoster] = useState(false)
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStatus, setUploadStatus] = useState('')
+
   // Seat Types state
   const [seatTypes, setSeatTypes] = useState<ISeatType[]>([
     { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
@@ -84,7 +90,7 @@ const EventsAdd = () => {
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      language: 'English',
+      eventLanguage: 'English',
       maxTicketsPerPerson: 10,
     }
   })
@@ -164,27 +170,45 @@ const EventsAdd = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
+      setUploadProgress(0)
+      
       // Upload poster image first
       let posterImageUrl = ''
       if (poster) {
+        setIsUploadingPoster(true)
+        setUploadStatus('Uploading poster image...')
+        setUploadProgress(10)
         try {
           posterImageUrl = await uploadSingle(poster).unwrap()
         } catch (uploadErr) {
-          // Fallback to blob URL if upload fails
+          console.warn('Poster upload failed, using blob URL')
           posterImageUrl = URL.createObjectURL(poster)
         }
+        setIsUploadingPoster(false)
+        setUploadProgress(30)
       }
 
       // Upload gallery images
       const galleryImageUrls: string[] = []
-      for (const file of galleryImages) {
-        try {
-          const url = await uploadSingle(file).unwrap()
-          galleryImageUrls.push(url)
-        } catch (uploadErr) {
-          galleryImageUrls.push(URL.createObjectURL(file))
+      if (galleryImages.length > 0) {
+        setIsUploadingGallery(true)
+        const progressPerImage = 40 / galleryImages.length
+        
+        for (let i = 0; i < galleryImages.length; i++) {
+          setUploadStatus(`Uploading gallery image ${i + 1} of ${galleryImages.length}...`)
+          try {
+            const url = await uploadSingle(galleryImages[i]).unwrap()
+            galleryImageUrls.push(url)
+          } catch (uploadErr) {
+            galleryImageUrls.push(URL.createObjectURL(galleryImages[i]))
+          }
+          setUploadProgress(30 + (i + 1) * progressPerImage)
         }
+        setIsUploadingGallery(false)
       }
+
+      setUploadProgress(70)
+      setUploadStatus('Creating event...')
 
       // Find categoryId from selected category name
       const selectedCat = eventCategories.find((cat: IEventCategory) => cat.name === values.category)
@@ -226,8 +250,11 @@ const EventsAdd = () => {
         isActive: true,
       }
 
+      setUploadProgress(90)
       await createEvents(payload).unwrap()
 
+      setUploadProgress(100)
+      setUploadStatus('')
       showMessage('Event added successfully!', 'success')
       reset()
       setPoster(null)
@@ -239,9 +266,14 @@ const EventsAdd = () => {
       }, 2000)
     } catch (err) {
       console.error('Error:', err)
+      setUploadStatus('')
+      setUploadProgress(0)
       showMessage('Failed to add Event', 'error')
     }
   }
+
+  // Check if any upload is in progress
+  const isUploading = isUploadingPoster || isUploadingGallery || isLoading
 
   return (
     <>
@@ -315,7 +347,7 @@ const EventsAdd = () => {
 
                 <Col lg={6} className="mt-3">
                   <label className="form-label">Language *</label>
-                  <select {...register('language')} className="form-select">
+                  <select {...register('eventLanguage')} className="form-select">
                     <option value="English">English</option>
                     <option value="Hindi">Hindi</option>
                     <option value="Telugu">Telugu</option>
@@ -328,7 +360,7 @@ const EventsAdd = () => {
                     <option value="Punjabi">Punjabi</option>
                     <option value="Other">Other</option>
                   </select>
-                  {errors.language && <small className="text-danger">{errors.language.message}</small>}
+                  {errors.eventLanguage && <small className="text-danger">{errors.eventLanguage.message}</small>}
                 </Col>
 
                 {/* Dates and Times */}
@@ -728,10 +760,46 @@ const EventsAdd = () => {
 
         {/* Submit Actions */}
         <div className="p-3 bg-light mb-3 rounded mt-4">
+          {/* Upload Progress */}
+          {isUploading && (
+            <Row className="mb-3">
+              <Col lg={12}>
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <Spinner animation="border" size="sm" variant="primary" />
+                  <span className="text-muted">{uploadStatus || 'Processing...'}</span>
+                </div>
+                <ProgressBar 
+                  now={uploadProgress} 
+                  label={`${Math.round(uploadProgress)}%`}
+                  variant={uploadProgress === 100 ? 'success' : 'primary'}
+                  animated={uploadProgress < 100}
+                />
+              </Col>
+            </Row>
+          )}
+          
           <Row className="justify-content-end g-2">
             <Col lg={2}>
-              <Button type="submit" variant="success" className="w-100" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
+              <Button 
+                type="button" 
+                variant="secondary" 
+                className="w-100"
+                onClick={() => router.push('/events/events-list')}
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+            </Col>
+            <Col lg={2}>
+              <Button type="submit" variant="success" className="w-100" disabled={isUploading}>
+                {isUploading ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    {uploadStatus || 'Saving...'}
+                  </>
+                ) : (
+                  'Create Event'
+                )}
               </Button>
             </Col>
           </Row>
