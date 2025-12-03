@@ -175,8 +175,118 @@ export const eventsApi = createApi({
       transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
       providesTags: ['Events'],
     }),
+
+    // ===== Event Bookings =====
+    
+    // Get all event bookings
+    getEventBookings: builder.query<{ bookings: any[]; meta: any }, { 
+      page?: number; 
+      limit?: number; 
+      userId?: string;
+      eventId?: string;
+      paymentStatus?: string;
+      bookingStatus?: string;
+      startDate?: string;
+      endDate?: string;
+      sortBy?: string;
+      sortOrder?: string;
+    } | void>({
+      query: (params) => {
+        let url = '/events/bookings'
+        if (params) {
+          const queryParams = new URLSearchParams()
+          if (params.page) queryParams.append('page', String(params.page))
+          if (params.limit) queryParams.append('limit', String(params.limit))
+          if (params.userId) queryParams.append('userId', params.userId)
+          if (params.eventId) queryParams.append('eventId', params.eventId)
+          if (params.paymentStatus) queryParams.append('paymentStatus', params.paymentStatus)
+          if (params.bookingStatus) queryParams.append('bookingStatus', params.bookingStatus)
+          if (params.startDate) queryParams.append('startDate', params.startDate)
+          if (params.endDate) queryParams.append('endDate', params.endDate)
+          if (params.sortBy) queryParams.append('sortBy', params.sortBy)
+          if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+          if (queryParams.toString()) url += `?${queryParams.toString()}`
+        }
+        return url
+      },
+      transformResponse: (response: any) => ({
+        bookings: Array.isArray(response.data) ? response.data : [response.data],
+        meta: response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 }
+      }),
+      providesTags: ['Events'],
+    }),
+
+    // Get event booking by ID
+    getEventBookingById: builder.query<any, string>({
+      query: (id) => `/events/bookings/${id}`,
+      transformResponse: (response: any) => response.data,
+      providesTags: (result, error, id) => [{ type: 'Events', id }],
+    }),
+
+    // Delete event booking
+    deleteEventBooking: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/events/bookings/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Events'],
+    }),
+
+    // Cancel event booking
+    cancelEventBooking: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/events/bookings/${id}/cancel`,
+        method: 'PUT',
+      }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ['Events'],
+    }),
   }),
 })
+
+// Event Booking interfaces
+export interface ICustomerDetails {
+  name: string
+  email: string
+  phone: string
+}
+
+export interface IEventBooking {
+  _id: string
+  eventId: IEvents | string
+  userId: { _id: string; name: string; email: string; phone?: string } | string
+  bookingReference: string
+  quantity: number
+  seatType: string
+  unitPrice: number
+  totalAmount: number
+  bookingFee: number
+  taxAmount: number
+  discountAmount: number
+  finalAmount: number
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded'
+  bookingStatus: 'confirmed' | 'cancelled' | 'expired'
+  paymentMethod: string
+  transactionId: string
+  bookedAt: string
+  expiresAt: string
+  customerDetails: ICustomerDetails
+  createdAt: string
+  updatedAt: string
+}
+
+interface EventBookingsResponse {
+  success: boolean
+  statusCode: number
+  message: string
+  data: IEventBooking | IEventBooking[]
+  meta?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
 
 export const { 
   useGetEventsQuery, 
@@ -187,4 +297,9 @@ export const {
   useGetBestEventsThisWeekQuery,
   useGetEventsByCategoryQuery,
   useGetEventsByLanguageQuery,
+  // Event Bookings
+  useGetEventBookingsQuery,
+  useGetEventBookingByIdQuery,
+  useDeleteEventBookingMutation,
+  useCancelEventBookingMutation,
 } = eventsApi

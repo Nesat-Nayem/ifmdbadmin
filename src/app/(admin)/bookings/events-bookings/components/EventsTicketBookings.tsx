@@ -1,60 +1,130 @@
 'use client'
 
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
-import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
-import { Card, CardFooter, CardHeader, CardTitle, Col, Row, Toast, ToastContainer } from 'react-bootstrap'
-import { useDeleteEventsMutation, useGetEventsQuery } from '@/store/eventsApi'
+import { Badge, Card, CardFooter, CardHeader, CardTitle, Col, Modal, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap'
+import { useGetEventBookingsQuery, useDeleteEventBookingMutation, useCancelEventBookingMutation } from '@/store/eventsApi'
 
 const EventsTicketBookings = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
+  const [paymentFilter, setPaymentFilter] = useState('')
+  const [bookingFilter, setBookingFilter] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
 
-  // ✅ Toast state
+  // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
 
-  const { data: eventsData = [], isLoading, isError } = useGetEventsQuery()
+  // Fetch bookings with filters
+  const { data, isLoading, isError, refetch } = useGetEventBookingsQuery({
+    page: currentPage,
+    limit: 10,
+    paymentStatus: paymentFilter || undefined,
+    bookingStatus: bookingFilter || undefined,
+    sortBy: 'bookedAt',
+    sortOrder: 'desc',
+  })
 
-  const [deleteEvents, { isLoading: isDeleting }] = useDeleteEventsMutation()
+  const [deleteBooking, { isLoading: isDeleting }] = useDeleteEventBookingMutation()
+  const [cancelBooking, { isLoading: isCancelling }] = useCancelEventBookingMutation()
 
-  if (isLoading) return <div>Loading...</div>
-  if (isError) return <div>Error loading movies</div>
+  const bookings = data?.bookings || []
+  const meta = data?.meta || { page: 1, limit: 10, total: 0, totalPages: 1 }
 
-  // ✅ filter eventsData by title + category
-  const filteredEvents = eventsData.filter((event: any) => [event.title, event.category].join(' ').toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter bookings by search term
+  const filteredBookings = bookings.filter((booking: any) => {
+    const eventTitle = booking.eventId?.title || ''
+    const customerName = booking.customerDetails?.name || ''
+    const bookingRef = booking.bookingReference || ''
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      eventTitle.toLowerCase().includes(searchLower) ||
+      customerName.toLowerCase().includes(searchLower) ||
+      bookingRef.toLowerCase().includes(searchLower)
+    )
+  })
 
-  // ✅ pagination
-  const itemsPerPage = 5
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage) || 1
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentItems = filteredEvents.slice(startIndex, startIndex + itemsPerPage)
-
-  // ✅ page change handler
+  // Page change handler
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= meta.totalPages) {
       setCurrentPage(page)
     }
   }
 
-  // ✅ Toast trigger
+  // Toast trigger
   const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
     setToastMessage(msg)
     setToastVariant(type)
     setShowToast(true)
   }
 
-  // ✅ Delete handler
-  const handleDelete = async (id: string) => {
+  // Delete handler
+  const handleDelete = async () => {
+    if (!selectedBookingId) return
     try {
-      await deleteEvents(id).unwrap()
-      showMessage('Events deleted successfully!', 'success')
+      await deleteBooking(selectedBookingId).unwrap()
+      showMessage('Booking deleted successfully!', 'success')
+      setShowDeleteModal(false)
+      setSelectedBookingId(null)
+      refetch()
     } catch (error: any) {
       console.error('Delete failed:', error)
-      showMessage(error?.data?.message || 'Failed to delete Events', 'error')
+      showMessage(error?.data?.message || 'Failed to delete booking', 'error')
     }
+  }
+
+  // Cancel handler
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelBooking(id).unwrap()
+      showMessage('Booking cancelled successfully!', 'success')
+      refetch()
+    } catch (error: any) {
+      console.error('Cancel failed:', error)
+      showMessage(error?.data?.message || 'Failed to cancel booking', 'error')
+    }
+  }
+
+  // Status badge helper
+  const getPaymentBadge = (status: string) => {
+    const variants: Record<string, string> = {
+      pending: 'warning',
+      completed: 'success',
+      failed: 'danger',
+      refunded: 'info',
+    }
+    return <Badge bg={variants[status] || 'secondary'}>{status}</Badge>
+  }
+
+  const getBookingBadge = (status: string) => {
+    const variants: Record<string, string> = {
+      confirmed: 'success',
+      cancelled: 'danger',
+      expired: 'secondary',
+    }
+    return <Badge bg={variants[status] || 'secondary'}>{status}</Badge>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 300 }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center text-danger py-5">
+        <IconifyIcon icon="solar:danger-triangle-bold" className="fs-1 mb-2" />
+        <p>Error loading bookings. Please try again.</p>
+        <button className="btn btn-primary btn-sm" onClick={() => refetch()}>Retry</button>
+      </div>
+    )
   }
 
   return (
@@ -64,21 +134,41 @@ const EventsTicketBookings = () => {
           <Card>
             <CardHeader className="d-flex justify-content-between align-items-center gap-2 flex-wrap">
               <CardTitle as="h4" className="mb-0">
-                Events Ticket Booking List
+                Event Ticket Bookings ({meta.total})
               </CardTitle>
 
-              {/* 🔍 Search */}
-              <div className="d-flex align-items-center gap-2 ms-auto">
+              {/* Filters */}
+              <div className="d-flex align-items-center gap-2 ms-auto flex-wrap">
+                <select
+                  className="form-select form-select-sm"
+                  style={{ maxWidth: 130 }}
+                  value={paymentFilter}
+                  onChange={(e) => { setPaymentFilter(e.target.value); setCurrentPage(1) }}
+                >
+                  <option value="">All Payments</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+                <select
+                  className="form-select form-select-sm"
+                  style={{ maxWidth: 130 }}
+                  value={bookingFilter}
+                  onChange={(e) => { setBookingFilter(e.target.value); setCurrentPage(1) }}
+                >
+                  <option value="">All Status</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="expired">Expired</option>
+                </select>
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setCurrentPage(1) // reset to page 1 when searching
-                  }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="form-control form-control-sm"
-                  style={{ maxWidth: 200 }}
+                  style={{ maxWidth: 180 }}
                 />
               </div>
             </CardHeader>
@@ -86,70 +176,110 @@ const EventsTicketBookings = () => {
             <div className="table-responsive">
               <table className="table align-middle mb-0 table-hover table-centered table-bordered">
                 <thead className="bg-light-subtle">
-                  <tr style={{ textWrap: 'nowrap' }}>
+                  <tr style={{ whiteSpace: 'nowrap' }}>
                     <th style={{ width: 20 }}>
                       <div className="form-check">
                         <input type="checkbox" className="form-check-input" id="checkAll" />
                       </div>
                     </th>
-
-                    <th style={{ textWrap: 'nowrap' }}>Event Name</th>
-                    <th style={{ textWrap: 'nowrap' }}>Organizer Name</th>
-                    <th style={{ textWrap: 'nowrap' }}>User Name</th>
-                    <th style={{ textWrap: 'nowrap' }}>City </th>
-                    <th style={{ textWrap: 'nowrap' }}>Event Date</th>
-                    <th style={{ textWrap: 'nowrap' }}>Price</th>
-                    <th style={{ textWrap: 'nowrap' }}>Total Seats</th>
-                    <th style={{ textWrap: 'nowrap' }}>Seat Number</th>
-                    <th style={{ textWrap: 'nowrap' }}>Ticket Price</th>
-                    <th style={{ textWrap: 'nowrap' }}>Status</th>
-                    <th style={{ textWrap: 'nowrap' }}>Action</th>
+                    <th>Booking Ref</th>
+                    <th>Event Name</th>
+                    <th>Customer</th>
+                    <th>Seat Type</th>
+                    <th>Qty</th>
+                    <th>Total Amount</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Booked At</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentItems.map((event: any) => (
-                    <tr key={event._id}>
+                  {filteredBookings.map((booking: any) => (
+                    <tr key={booking._id}>
                       <td>
                         <div className="form-check">
                           <input type="checkbox" className="form-check-input" />
                         </div>
                       </td>
                       <td>
+                        <span className="fw-medium text-primary">{booking.bookingReference}</span>
+                      </td>
+                      <td>
                         <div className="d-flex align-items-center gap-2">
-                          <div className="rounded bg-light avatar-md d-flex align-items-center justify-content-center">
-                            <Image src={event.posterImage || '/placeholder.png'} alt={event.title} width={60} height={60} className="rounded" />
+                          {booking.eventId?.posterImage && (
+                            <img
+                              src={booking.eventId.posterImage}
+                              alt={booking.eventId?.title || 'Event'}
+                              width={40}
+                              height={40}
+                              className="rounded"
+                              style={{ objectFit: 'cover' }}
+                            />
+                          )}
+                          <div>
+                            <p className="mb-0 fw-medium">{booking.eventId?.title || 'N/A'}</p>
+                            <small className="text-muted">
+                              {booking.eventId?.startDate
+                                ? new Date(booking.eventId.startDate).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : ''}
+                            </small>
                           </div>
                         </div>
                       </td>
-                      <td>{event.title}</td>
-                      <td>{event.category}</td>
-                      <td>{event.category}</td>
-                      <td>{event.category}</td>
-                      <td>{event.category}</td>
-                      <td>{event.category}</td>
-                      <td style={{ textWrap: 'nowrap' }}>
-                        {' '}
-                        {new Date(event.startDate).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </td>
-                      <td style={{ textWrap: 'nowrap' }}>
-                        {' '}
-                        {new Date(event.endDate).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </td>
-                      <td className={`fw-medium ${event.isActive ? 'text-success' : 'text-danger'}`}>{event.status}</td>
                       <td>
-                        <div className="d-flex gap-2">
-                          <Link href={`/bookings/movies-bookings/edit/${event._id}`} className="btn btn-light btn-sm">
+                        <div>
+                          <p className="mb-0 fw-medium">{booking.customerDetails?.name || 'N/A'}</p>
+                          <small className="text-muted">{booking.customerDetails?.email || ''}</small>
+                        </div>
+                      </td>
+                      <td>{booking.seatType}</td>
+                      <td className="text-center">{booking.quantity}</td>
+                      <td className="fw-medium">₹{booking.finalAmount?.toLocaleString() || 0}</td>
+                      <td>{getPaymentBadge(booking.paymentStatus)}</td>
+                      <td>{getBookingBadge(booking.bookingStatus)}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {new Date(booking.bookedAt).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                        <br />
+                        <small className="text-muted">
+                          {new Date(booking.bookedAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </small>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <Link href={`/bookings/events-bookings/${booking._id}`} className="btn btn-light btn-sm" title="View">
                             <IconifyIcon icon="solar:eye-broken" className="align-middle fs-18" />
                           </Link>
-                          <button className="btn btn-soft-danger btn-sm" onClick={() => handleDelete(event._id)} disabled={isDeleting}>
+                          {booking.bookingStatus === 'confirmed' && (
+                            <button
+                              className="btn btn-soft-warning btn-sm"
+                              onClick={() => handleCancel(booking._id)}
+                              disabled={isCancelling}
+                              title="Cancel"
+                            >
+                              <IconifyIcon icon="solar:close-circle-broken" className="align-middle fs-18" />
+                            </button>
+                          )}
+                          <button
+                            className="btn btn-soft-danger btn-sm"
+                            onClick={() => {
+                              setSelectedBookingId(booking._id)
+                              setShowDeleteModal(true)
+                            }}
+                            disabled={isDeleting}
+                            title="Delete"
+                          >
                             <IconifyIcon icon="solar:trash-bin-minimalistic-2-broken" className="align-middle fs-18" />
                           </button>
                         </div>
@@ -157,10 +287,11 @@ const EventsTicketBookings = () => {
                     </tr>
                   ))}
 
-                  {currentItems.length === 0 && (
+                  {filteredBookings.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="text-center">
-                        No events found
+                      <td colSpan={11} className="text-center py-4">
+                        <IconifyIcon icon="solar:ticket-broken" className="fs-1 text-muted mb-2" />
+                        <p className="mb-0 text-muted">No bookings found</p>
                       </td>
                     </tr>
                   )}
@@ -168,37 +299,63 @@ const EventsTicketBookings = () => {
               </table>
             </div>
 
-            {/* ✅ Pagination */}
+            {/* Pagination */}
             <CardFooter className="border-top">
-              <nav aria-label="Page navigation example">
-                <ul className="pagination justify-content-end mb-0">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                      Previous
-                    </button>
-                  </li>
-
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                        {index + 1}
+              <div className="d-flex justify-content-between align-items-center">
+                <small className="text-muted">
+                  Showing {filteredBookings.length} of {meta.total} bookings
+                </small>
+                <nav aria-label="Page navigation">
+                  <ul className="pagination justify-content-end mb-0">
+                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                        Previous
                       </button>
                     </li>
-                  ))}
 
-                  <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                      Next
-                    </button>
-                  </li>
-                </ul>
-              </nav>
+                    {Array.from({ length: Math.min(meta.totalPages, 5) }, (_, index) => {
+                      const pageNum = index + 1
+                      return (
+                        <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                          <button className="page-link" onClick={() => handlePageChange(pageNum)}>
+                            {pageNum}
+                          </button>
+                        </li>
+                      )
+                    })}
+
+                    <li className={`page-item ${currentPage === meta.totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                        Next
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
             </CardFooter>
           </Card>
         </Col>
       </Row>
 
-      {/* ✅ Toast Notification */}
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this booking? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </button>
+          <button className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? <Spinner size="sm" /> : 'Delete'}
+          </button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Toast Notification */}
       <ToastContainer position="top-end" className="p-3">
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg={toastVariant === 'success' ? 'success' : 'danger'}>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
