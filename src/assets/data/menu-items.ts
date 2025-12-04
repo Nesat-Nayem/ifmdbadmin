@@ -197,14 +197,63 @@ export const MENU_ITEMS: MenuItemType[] = [
   // },
 
   {
+    key: 'vendor-management',
+    label: 'VENDOR MANAGEMENT',
+    isTitle: true,
+  },
+  {
+    key: 'vendor-packages',
+    label: 'Vendor Packages',
+    icon: 'solar:box-bold-duotone',
+    children: [
+      {
+        key: 'vendor-packages-add',
+        label: 'Add Package',
+        url: '/vendor-packages/add',
+        parentKey: 'vendor-packages',
+      },
+      {
+        key: 'vendor-packages-list',
+        label: 'Packages List',
+        url: '/vendor-packages/list',
+        parentKey: 'vendor-packages',
+      },
+    ],
+  },
+  {
+    key: 'platform-settings',
+    label: 'Platform Fees',
+    icon: 'solar:settings-minimalistic-bold-duotone',
+    url: '/vendor-settings/platform-fees',
+  },
+  {
+    key: 'vendor-applications',
+    label: 'Vendor Applications',
+    icon: 'solar:document-add-bold-duotone',
+    children: [
+      {
+        key: 'vendor-applications-pending',
+        label: 'Pending Applications',
+        url: '/vendor-applications/pending',
+        parentKey: 'vendor-applications',
+      },
+      {
+        key: 'vendor-applications-all',
+        label: 'All Applications',
+        url: '/vendor-applications/list',
+        parentKey: 'vendor-applications',
+      },
+    ],
+  },
+  {
     key: 'users',
     label: 'USERS',
     isTitle: true,
   },
   {
     key: 'vendors-list',
-    label: 'Vendors List',
-    icon: 'solar:user-bold-duotone',
+    label: 'Approved Vendors',
+    icon: 'solar:user-check-bold-duotone',
     url: '/vendors/vendors-list',
     parentKey: 'users',
   },
