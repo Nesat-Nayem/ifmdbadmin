@@ -206,59 +206,194 @@ const MoviesView = () => {
               </ListGroup.Item>
             </ListGroup>
 
-            {/* Cast List */}
-            <h4 className="text-dark fw-medium mt-3">Cast List :</h4>
-            {movie.castCrew?.length ? (
-              <Row className="g-3">
-                {movie.castCrew.map((cast, index) => (
-                  <Col lg={6} key={index}>
-                    <div className="p-3 rounded border text-center bg-light" style={{ minHeight: 200 }}>
-                      {cast.profileImage ? (
-                        <Image src={cast.profileImage} alt="cast-img" height={100} width={100} style={{ objectFit: 'cover', borderRadius: '50%' }} />
-                      ) : (
-                        <div className="rounded-circle bg-light mx-auto mb-2" style={{ width: 100, height: 100 }} />
-                      )}
-                      <p className="mb-0 fw-bold">{cast.name}</p>
-                      <p className="text-muted">{cast.role}</p>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            ) : (
-              <div className="text-muted">No cast listed.</div>
+            {/* Cast Section */}
+            <div className="mt-4">
+              <h4 className="text-dark fw-medium mb-3 d-flex align-items-center gap-2">
+                <span>🎭</span> Cast
+              </h4>
+              {(movie as any).cast?.length ? (
+                <Row className="g-3">
+                  {(movie as any).cast.map((c: any, index: number) => (
+                    <Col lg={4} md={6} key={index}>
+                      <div className="p-3 rounded-3 border bg-light h-100">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {c.image ? (
+                              <Image 
+                                src={c.image} 
+                                alt={c.name} 
+                                width={70} 
+                                height={70} 
+                                className="rounded-circle border shadow-sm"
+                                style={{ objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <div 
+                                className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                                style={{ width: 70, height: 70 }}
+                              >
+                                <span style={{ fontSize: '1.5rem' }}>👤</span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h6 className="mb-1 fw-semibold text-dark">{c.name || 'Unknown'}</h6>
+                            {c.type && (
+                              <span className="badge bg-primary bg-opacity-10 text-primary small">
+                                {c.type}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              ) : movie.castCrew?.length ? (
+                <Row className="g-3">
+                  {movie.castCrew.map((cast, index) => (
+                    <Col lg={4} md={6} key={index}>
+                      <div className="p-3 rounded-3 border bg-light h-100">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {cast.profileImage ? (
+                              <Image 
+                                src={cast.profileImage} 
+                                alt={cast.name} 
+                                width={70} 
+                                height={70} 
+                                className="rounded-circle border shadow-sm"
+                                style={{ objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <div 
+                                className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                                style={{ width: 70, height: 70 }}
+                              >
+                                <span style={{ fontSize: '1.5rem' }}>👤</span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h6 className="mb-1 fw-semibold text-dark">{cast.name}</h6>
+                            {cast.role && (
+                              <span className="badge bg-primary bg-opacity-10 text-primary small">
+                                {cast.role}
+                              </span>
+                            )}
+                            {cast.characterName && (
+                              <p className="mb-0 text-muted small mt-1">as {cast.characterName}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <div className="text-muted p-3 bg-light rounded">No cast members listed.</div>
+              )}
+            </div>
+
+            {/* Crew Section */}
+            <div className="mt-4">
+              <h4 className="text-dark fw-medium mb-3 d-flex align-items-center gap-2">
+                <span>🎬</span> Crew
+              </h4>
+              {(movie as any).crew?.length ? (
+                <Row className="g-3">
+                  {(movie as any).crew.map((c: any, index: number) => (
+                    <Col lg={4} md={6} key={index}>
+                      <div className="p-3 rounded-3 border bg-light h-100">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="flex-shrink-0">
+                            {c.image ? (
+                              <Image 
+                                src={c.image} 
+                                alt={c.name} 
+                                width={70} 
+                                height={70} 
+                                className="rounded-circle border shadow-sm"
+                                style={{ objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <div 
+                                className="rounded-circle bg-info d-flex align-items-center justify-content-center text-white"
+                                style={{ width: 70, height: 70 }}
+                              >
+                                <span style={{ fontSize: '1.5rem' }}>🎬</span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h6 className="mb-1 fw-semibold text-dark">{c.name || 'Unknown'}</h6>
+                            {c.designation && (
+                              <span className="badge bg-info bg-opacity-10 text-info small">
+                                {c.designation}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <div className="text-muted p-3 bg-light rounded">No crew members listed.</div>
+              )}
+            </div>
+
+            {/* Director & Producer Quick Info */}
+            {(movie.director || movie.producer) && (
+              <div className="mt-4 p-3 bg-light rounded-3 border">
+                <Row>
+                  {movie.director && (
+                    <Col md={6}>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="text-muted">Director:</span>
+                        <strong className="text-dark">{movie.director}</strong>
+                      </div>
+                    </Col>
+                  )}
+                  {movie.producer && (
+                    <Col md={6}>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="text-muted">Producer:</span>
+                        <strong className="text-dark">{movie.producer}</strong>
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              </div>
             )}
 
-            {/* Admin Cast (simple) */}
-            {(movie as any).cast?.length ? (
-              <>
-                <h5 className="text-dark fw-medium mt-3">Admin Cast</h5>
-                <ul>
-                  {(movie as any).cast.map((c: any, i: number) => (
-                    <li key={i}>{c.name} {c.type ? `(${c.type})` : ''}</li>
+            {/* Tags */}
+            {(movie as any).tags?.length > 0 && (
+              <div className="mt-4">
+                <h5 className="text-dark fw-medium mb-2">🏷️ Tags</h5>
+                <div className="d-flex flex-wrap gap-2">
+                  {(movie as any).tags.map((tag: string, i: number) => (
+                    <span key={i} className="badge bg-secondary bg-opacity-25 text-dark px-3 py-2">
+                      {tag}
+                    </span>
                   ))}
-                </ul>
-              </>
-            ) : null}
+                </div>
+              </div>
+            )}
 
-            {/* Admin Crew (simple) */}
-            {(movie as any).crew?.length ? (
-              <>
-                <h5 className="text-dark fw-medium mt-2">Admin Crew</h5>
-                <ul>
-                  {(movie as any).crew.map((c: any, i: number) => (
-                    <li key={i}>{c.name} {c.designation ? `- ${c.designation}` : ''}</li>
+            {/* Awards */}
+            {(movie as any).awards?.length > 0 && (
+              <div className="mt-4">
+                <h5 className="text-dark fw-medium mb-2">🏆 Awards</h5>
+                <div className="d-flex flex-wrap gap-2">
+                  {(movie as any).awards.map((award: string, i: number) => (
+                    <span key={i} className="badge bg-warning bg-opacity-25 text-dark px-3 py-2">
+                      {award}
+                    </span>
                   ))}
-                </ul>
-              </>
-            ) : null}
-
-            {/* Tags & Awards */}
-            {(movie as any).tags?.length ? (
-              <p className="mt-3"><strong>Tags:</strong> {(movie as any).tags.join(', ')}</p>
-            ) : null}
-            {(movie as any).awards?.length ? (
-              <p><strong>Awards:</strong> {(movie as any).awards.join(', ')}</p>
-            ) : null}
+                </div>
+              </div>
+            )}
           </CardBody>
         </Card>
       </Col>

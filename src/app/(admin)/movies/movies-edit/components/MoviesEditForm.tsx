@@ -595,31 +595,46 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                   <Controller
                     control={control}
                     name="formats"
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        multiple
-                        className="form-control form-select"
-                        onChange={(e) => field.onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))}
-                      >
-                        <option value="2d">2D</option>
-                        <option value="3d">3D</option>
-                        <option value="imax">IMAX</option>
-                        <option value="imax_3d">IMAX 3D</option>
-                        <option value="imax_4d">IMAX 4D</option>
-                        <option value="imax_5d">IMAX 5D</option>
-                        <option value="4dx">4DX</option>
-                        <option value="dolby_atmos">Dolby Atmos</option>
-                        <option value="dolby_cinema">Dolby Cinema</option>
-                        <option value="screenx">ScreenX</option>
-                        <option value="d_box">D-BOX</option>
-                        <option value="hdr">HDR</option>
-                        <option value="uhd">UHD</option>
-                        <option value="virtual_reality">Virtual Reality (VR)</option>
-                        <option value="hfr">High Frame Rate (HFR)</option>
-                        <option value="laser">Laser Projection</option>
-                      </select>
-                    )}
+                    render={({ field }) => {
+                      const formatOptions = [
+                        { value: '2D', label: '2D' },
+                        { value: '3D', label: '3D' },
+                        { value: 'IMAX', label: 'IMAX' },
+                        { value: 'IMAX 3D', label: 'IMAX 3D' },
+                        { value: '4DX', label: '4DX' },
+                        { value: 'Dolby Atmos', label: 'Dolby Atmos' },
+                        { value: 'Dolby Cinema', label: 'Dolby Cinema' },
+                        { value: 'ScreenX', label: 'ScreenX' },
+                        { value: 'D-BOX', label: 'D-BOX' },
+                        { value: 'HDR', label: 'HDR' },
+                      ]
+                      const toggleFormat = (val: string) => {
+                        const current = field.value || []
+                        if (current.includes(val)) {
+                          field.onChange(current.filter((v: string) => v !== val))
+                        } else {
+                          field.onChange([...current, val])
+                        }
+                      }
+                      return (
+                        <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
+                          {formatOptions.map((opt) => (
+                            <div
+                              key={opt.value}
+                              onClick={() => toggleFormat(opt.value)}
+                              className={`px-3 py-2 rounded-pill border cursor-pointer ${
+                                (field.value || []).includes(opt.value)
+                                  ? 'bg-primary text-white border-primary'
+                                  : 'bg-white text-dark border-secondary'
+                              }`}
+                              style={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+                            >
+                              {opt.label}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }}
                   />
                 </div>
               </Col>
@@ -705,30 +720,40 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                   <Controller
                     control={control}
                     name="genres"
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        multiple
-                        className="form-control form-select"
-                        onChange={(e) => field.onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))}
-                      >
-                        <option value="action">Action</option>
-                        <option value="comedy">Comedy</option>
-                        <option value="drama">Drama</option>
-                        <option value="thriller">Thriller</option>
-                        <option value="horror">Horror</option>
-                        <option value="romance">Romance</option>
-                        <option value="sci-fi">Sci-Fi</option>
-                        <option value="fantasy">Fantasy</option>
-                        <option value="documentary">Documentary</option>
-                        <option value="animation">Animation</option>
-                        <option value="musical">Musical</option>
-                        <option value="biography">Biography</option>
-                        <option value="adventure">Adventure</option>
-                        <option value="crime">Crime</option>
-                        <option value="family">Family</option>
-                      </select>
-                    )}
+                    render={({ field }) => {
+                      const genreOptions = [
+                        'Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Romance',
+                        'Sci-Fi', 'Fantasy', 'Documentary', 'Animation', 'Musical',
+                        'Biography', 'Adventure', 'Crime', 'Family'
+                      ]
+                      const toggleGenre = (val: string) => {
+                        const lowerVal = val.toLowerCase()
+                        const current = field.value || []
+                        if (current.includes(lowerVal)) {
+                          field.onChange(current.filter((v: string) => v !== lowerVal))
+                        } else {
+                          field.onChange([...current, lowerVal])
+                        }
+                      }
+                      return (
+                        <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
+                          {genreOptions.map((genre) => (
+                            <div
+                              key={genre}
+                              onClick={() => toggleGenre(genre)}
+                              className={`px-3 py-2 rounded-pill border ${
+                                (field.value || []).includes(genre.toLowerCase())
+                                  ? 'bg-success text-white border-success'
+                                  : 'bg-white text-dark border-secondary'
+                              }`}
+                              style={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+                            >
+                              {genre}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }}
                   />
                   {errors.genres && <p className="text-danger">{errors.genres.message}</p>}
                 </div>
@@ -1012,245 +1037,260 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
               </Col>
             </Row>
 
-            {/* Bottom Update Button inside form */}
-            <div className="p-3 bg-light rounded mt-3">
+            {/* Cast Section */}
+            <Card className="mt-4 border">
+              <CardHeader className="d-flex justify-content-between align-items-center bg-light">
+                <CardTitle as="h5" className="mb-0">
+                  <span className="me-2">🎭</span> Cast Details
+                </CardTitle>
+                <button type="button" className="btn btn-sm btn-primary d-flex align-items-center gap-1" onClick={addCast}>
+                  <span>+</span> Add Cast
+                </button>
+              </CardHeader>
+              <CardBody>
+                <Row className="g-3">
+                  {cast.map((member, index) => (
+                    <Col lg={6} key={`cast-${index}`}>
+                      <div className="p-3 border rounded bg-light position-relative">
+                        {cast.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger position-absolute"
+                            style={{ top: 8, right: 8 }}
+                            onClick={() => removeCast(index)}
+                          >
+                            ✕
+                          </button>
+                        )}
+                        <div className="d-flex gap-3">
+                          <div className="text-center" style={{ width: 100 }}>
+                            {member.image ? (
+                              <img src={member.image} alt="Cast" className="rounded-circle border" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                            ) : (
+                              <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style={{ width: 80, height: 80 }}>
+                                <span className="text-white fs-4">👤</span>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="form-control form-control-sm mt-2"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                try {
+                                  const url = await uploadSingle(file).unwrap()
+                                  handleCastChange(index, 'image', url)
+                                } catch (err) {
+                                  console.error('Cast image upload failed:', err)
+                                } finally {
+                                  e.currentTarget.value = ''
+                                }
+                              }}
+                              disabled={isUploading}
+                            />
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="mb-2">
+                              <label className="form-label small mb-1">Name</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={member.name}
+                                onChange={(e) => handleCastChange(index, 'name', e.target.value)}
+                                placeholder="Enter name"
+                              />
+                            </div>
+                            <div>
+                              <label className="form-label small mb-1">Role / Type</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={member.type || ''}
+                                onChange={(e) => handleCastChange(index, 'type', e.target.value)}
+                                placeholder="e.g. Lead Actor"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </CardBody>
+            </Card>
+
+            {/* Crew Section */}
+            <Card className="mt-4 border">
+              <CardHeader className="d-flex justify-content-between align-items-center bg-light">
+                <CardTitle as="h5" className="mb-0">
+                  <span className="me-2">🎬</span> Crew Details
+                </CardTitle>
+                <button type="button" className="btn btn-sm btn-primary d-flex align-items-center gap-1" onClick={addCrew}>
+                  <span>+</span> Add Crew
+                </button>
+              </CardHeader>
+              <CardBody>
+                <Row className="g-3">
+                  {crew.map((member, index) => (
+                    <Col lg={6} key={`crew-${index}`}>
+                      <div className="p-3 border rounded bg-light position-relative">
+                        {crew.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger position-absolute"
+                            style={{ top: 8, right: 8 }}
+                            onClick={() => removeCrew(index)}
+                          >
+                            ✕
+                          </button>
+                        )}
+                        <div className="d-flex gap-3">
+                          <div className="text-center" style={{ width: 100 }}>
+                            {member.image ? (
+                              <img src={member.image} alt="Crew" className="rounded-circle border" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                            ) : (
+                              <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style={{ width: 80, height: 80 }}>
+                                <span className="text-white fs-4">👤</span>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="form-control form-control-sm mt-2"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                try {
+                                  const url = await uploadSingle(file).unwrap()
+                                  handleCrewChange(index, 'image', url)
+                                } catch (err) {
+                                  console.error('Crew image upload failed:', err)
+                                } finally {
+                                  e.currentTarget.value = ''
+                                }
+                              }}
+                              disabled={isUploading}
+                            />
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="mb-2">
+                              <label className="form-label small mb-1">Name</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={member.name}
+                                onChange={(e) => handleCrewChange(index, 'name', e.target.value)}
+                                placeholder="Enter name"
+                              />
+                            </div>
+                            <div>
+                              <label className="form-label small mb-1">Designation</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={member.designation || ''}
+                                onChange={(e) => handleCrewChange(index, 'designation', e.target.value)}
+                                placeholder="e.g. Director, Producer"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </CardBody>
+            </Card>
+
+            {/* Company Details Section */}
+            <Card className="mt-4 border">
+              <CardHeader className="bg-light">
+                <CardTitle as="h5" className="mb-0">
+                  <span className="me-2">🏢</span> Company Details
+                </CardTitle>
+              </CardHeader>
+              <CardBody>
+                <Row>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">Production House</label>
+                      <Controller
+                        control={control}
+                        name="productionhouse"
+                        render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter production house" />}
+                      />
+                    </div>
+                  </Col>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">Website (optional)</label>
+                      <Controller control={control} name="website" render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com" />} />
+                    </div>
+                  </Col>
+                  <Col lg={12}>
+                    <div className="mb-3">
+                      <label className="form-label">Address</label>
+                      <Controller control={control} name="address" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter address" />} />
+                    </div>
+                  </Col>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">State</label>
+                      <Controller control={control} name="state" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter state" />} />
+                    </div>
+                  </Col>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">Country</label>
+                      <Controller
+                        control={control}
+                        name="country"
+                        render={({ field }) => (
+                          <select {...field} className="form-select">
+                            <option value="">Select Country</option>
+                            <option value="India">India</option>
+                            <option value="USA">USA</option>
+                            <option value="UK">UK</option>
+                          </select>
+                        )}
+                      />
+                    </div>
+                  </Col>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">Phone Number</label>
+                      <Controller control={control} name="phone" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter phone number" />} />
+                    </div>
+                  </Col>
+                  <Col lg={6}>
+                    <div className="mb-3">
+                      <label className="form-label">Email</label>
+                      <Controller control={control} name="email" render={({ field }) => <input {...field} type="email" className="form-control" placeholder="Enter email" />} />
+                    </div>
+                  </Col>
+                </Row>
+              </CardBody>
+            </Card>
+
+            {/* Submit Button - Fixed at Bottom */}
+            <div className="sticky-bottom bg-white border-top p-3 mt-4" style={{ marginLeft: -16, marginRight: -16, marginBottom: -16 }}>
               <Row className="justify-content-end g-2">
-                <Col lg={2}>
-                  <Button type="submit" className="w-100" variant="success" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Update Movie'}
+                <Col lg={3} md={4} sm={6}>
+                  <Button type="submit" className="w-100 py-2" variant="success" size="lg" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Spinner size="sm" animation="border" className="me-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>✓ Update Movie</>
+                    )}
                   </Button>
                 </Col>
               </Row>
             </div>
           </form>
-        </CardBody>
-      </Card>
-
-      {/* Cast */}
-      <Card>
-        <CardHeader className="d-flex justify-content-between align-items-center">
-          <CardTitle as="h4">Cast Details</CardTitle>
-          <button type="button" className="btn btn-sm btn-outline-primary" onClick={addCast}>
-            +
-          </button>
-        </CardHeader>
-
-        <CardBody>
-          {cast.map((member, index) => (
-            <Row key={`cast-${index}`} className="align-items-end mb-3">
-              <Col lg={4}>
-                <label className="form-label">Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-control"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    try {
-                      const url = await uploadSingle(file).unwrap()
-                      handleCastChange(index, 'image', url)
-                    } catch (err) {
-                      console.error('Cast image upload failed:', err)
-                    } finally {
-                      e.currentTarget.value = ''
-                    }
-                  }}
-                  disabled={isUploading}
-                />
-                {member.image ? (
-                  <div className="mt-2">
-                    <img src={member.image} alt="Cast" className="img-thumbnail" style={{ maxHeight: 100 }} />
-                  </div>
-                ) : null}
-              </Col>
-
-              <Col lg={3}>
-                <label className="form-label">Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={member.name}
-                  onChange={(e) => handleCastChange(index, 'name', e.target.value)}
-                  placeholder="Enter name"
-                />
-              </Col>
-
-              <Col lg={3}>
-                <label className="form-label">Designation</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={member.type || ''}
-                  onChange={(e) => handleCastChange(index, 'type', e.target.value)}
-                  placeholder="Enter designation"
-                />
-              </Col>
-
-              <Col lg={1}>
-                {cast.length > 1 && (
-                  <button type="button" className="btn btn-outline-danger w-100" onClick={() => removeCast(index)}>
-                    ✕
-                  </button>
-                )}
-              </Col>
-            </Row>
-          ))}
-        </CardBody>
-      </Card>
-
-      {/* Crew */}
-      <Card>
-        <CardHeader className="d-flex justify-content-between align-items-center">
-          <CardTitle as="h4">Crew Details</CardTitle>
-          <button type="button" className="btn btn-sm btn-outline-primary" onClick={addCrew}>
-            +
-          </button>
-        </CardHeader>
-
-        <CardBody>
-          {crew.map((member, index) => (
-            <Row key={`crew-${index}`} className="align-items-end mb-3">
-              <Col lg={4}>
-                <label className="form-label">Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-control"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    try {
-                      const url = await uploadSingle(file).unwrap()
-                      handleCrewChange(index, 'image', url)
-                    } catch (err) {
-                      console.error('Crew image upload failed:', err)
-                    } finally {
-                      e.currentTarget.value = ''
-                    }
-                  }}
-                  disabled={isUploading}
-                />
-                {member.image ? (
-                  <div className="mt-2">
-                    <img src={member.image} alt="Crew" className="img-thumbnail" style={{ maxHeight: 100 }} />
-                  </div>
-                ) : null}
-              </Col>
-
-              <Col lg={3}>
-                <label className="form-label">Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={member.name}
-                  onChange={(e) => handleCrewChange(index, 'name', e.target.value)}
-                  placeholder="Enter name"
-                />
-              </Col>
-
-              <Col lg={3}>
-                <label className="form-label">Designation</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={member.designation || ''}
-                  onChange={(e) => handleCrewChange(index, 'designation', e.target.value)}
-                  placeholder="Enter designation"
-                />
-              </Col>
-
-              <Col lg={1}>
-                {crew.length > 1 && (
-                  <button type="button" className="btn btn-outline-danger w-100" onClick={() => removeCrew(index)}>
-                    ✕
-                  </button>
-                )}
-              </Col>
-            </Row>
-          ))}
-        </CardBody>
-      </Card>
-
-      {/* Company details */}
-      <Card>
-        <CardHeader>
-          <CardTitle as="h4">Company Details</CardTitle>
-        </CardHeader>
-
-        <CardBody>
-          <Row>
-            {/* Production House */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Production House</label>
-                <Controller
-                  control={control}
-                  name="productionhouse"
-                  render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter production house" />}
-                />
-              </div>
-            </Col>
-
-            {/* Website */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Website (optional)</label>
-                <Controller control={control} name="website" render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com" />} />
-              </div>
-            </Col>
-
-            {/* Address */}
-            <Col lg={12}>
-              <div className="mb-3">
-                <label className="form-label">Address</label>
-                <Controller control={control} name="address" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter address" />} />
-              </div>
-            </Col>
-
-            {/* State */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">State</label>
-                <Controller control={control} name="state" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter state" />} />
-              </div>
-            </Col>
-
-            {/* Country */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Country</label>
-                <Controller
-                  control={control}
-                  name="country"
-                  render={({ field }) => (
-                    <select {...field} className="form-select">
-                      <option value="">Select Country</option>
-                      <option value="India">India</option>
-                      <option value="USA">USA</option>
-                      <option value="UK">UK</option>
-                    </select>
-                  )}
-                />
-              </div>
-            </Col>
-
-            {/* Phone */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Phone Number</label>
-                <Controller control={control} name="phone" render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter phone number" />} />
-              </div>
-            </Col>
-
-            {/* Email */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Email</label>
-                <Controller control={control} name="email" render={({ field }) => <input {...field} type="email" className="form-control" placeholder="Enter email" />} />
-              </div>
-            </Col>
-          </Row>
         </CardBody>
       </Card>
 
