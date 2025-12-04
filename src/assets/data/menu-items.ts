@@ -1,6 +1,7 @@
 import { MenuItemType } from '@/types/menu'
 
 export const MENU_ITEMS: MenuItemType[] = [
+  // ============ GENERAL (Everyone) ============
   {
     key: 'general',
     label: 'General',
@@ -12,10 +13,13 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:widget-5-bold-duotone',
     url: '/dashboard',
   },
+
+  // ============ ADMIN ONLY SECTIONS ============
   {
     key: 'onboarding',
     label: 'OnBoarding',
     icon: 'solar:star-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'onboarding-add',
@@ -35,6 +39,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     key: 'category',
     icon: 'solar:clipboard-list-bold-duotone',
     label: 'Category',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'category-add',
@@ -55,8 +60,10 @@ export const MENU_ITEMS: MenuItemType[] = [
     label: 'Home Banner',
     icon: 'solar:home-bold-duotone',
     url: '/home-banner',
+    allowedRoles: ['admin'],
   },
 
+  // ============ BOOKINGS (Role + Service based) ============
   {
     key: 'bookings',
     icon: 'bx:list-check',
@@ -67,81 +74,100 @@ export const MENU_ITEMS: MenuItemType[] = [
         label: 'Movies Bookings',
         url: '/bookings/movies-bookings',
         parentKey: 'bookings',
+        allowedRoles: ['admin', 'vendor'],
+        allowedServices: ['film_trade', 'movie_watch'],
       },
       {
         key: 'events-bookings',
         label: 'Events Bookings',
         url: '/bookings/events-bookings',
         parentKey: 'bookings',
+        allowedRoles: ['admin', 'vendor'],
+        allowedServices: ['events'],
       },
     ],
   },
+
+  // ============ MOVIES (Admin + Film Trade/Movie Watch Vendors) ============
   {
     key: 'movies',
     icon: 'bx:movie',
     label: 'Movies',
+    allowedRoles: ['admin', 'vendor'],
+    allowedServices: ['film_trade', 'movie_watch'],
     children: [
       {
         key: 'movies-category-add',
         label: 'Create Category',
         url: '/movies/movies-category-add',
         parentKey: 'movies',
+        allowedRoles: ['admin'],
       },
       {
         key: 'movies-category-list',
         label: 'Movies Category List',
         url: '/movies/movies-category-list',
         parentKey: 'movies',
+        allowedRoles: ['admin'],
       },
       {
         key: 'movies-list-add',
-        label: 'Movies Add',
+        label: 'Add Movie',
         url: '/movies/movies-add',
         parentKey: 'movies',
       },
       {
         key: 'movies-list',
-        label: 'Movies List',
+        label: 'My Movies',
         url: '/movies/movies-list',
         parentKey: 'movies',
       },
     ],
   },
+
+  // ============ EVENTS (Admin + Events Vendors) ============
   {
     key: 'events',
     icon: 'bx:music',
     label: 'Events',
+    allowedRoles: ['admin', 'vendor'],
+    allowedServices: ['events'],
     children: [
       {
         key: 'events-category-add',
         label: 'Create Category',
         url: '/events/category-add',
         parentKey: 'events',
+        allowedRoles: ['admin'],
       },
       {
         key: 'events-category-list',
         label: 'Category List',
         url: '/events/category-list',
         parentKey: 'events',
+        allowedRoles: ['admin'],
       },
       {
         key: 'events-list-add',
-        label: 'Events Add',
+        label: 'Add Event',
         url: '/events/events-add',
         parentKey: 'events',
       },
       {
         key: 'events-list',
-        label: 'Events List',
+        label: 'My Events',
         url: '/events/events-list',
         parentKey: 'events',
       },
     ],
   },
+
+  // ============ ADMIN ONLY ============
   {
     key: 'advertise',
     label: 'Advertise',
     icon: 'solar:box-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'advertise-add',
@@ -161,6 +187,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     key: 'subscription',
     label: 'Subscription Plan',
     icon: 'solar:dollar-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'subscription-add',
@@ -196,15 +223,18 @@ export const MENU_ITEMS: MenuItemType[] = [
   //   ],
   // },
 
+  // ============ VENDOR MANAGEMENT (Admin Only) ============
   {
     key: 'vendor-management',
     label: 'VENDOR MANAGEMENT',
     isTitle: true,
+    allowedRoles: ['admin'],
   },
   {
     key: 'vendor-packages',
     label: 'Vendor Packages',
     icon: 'solar:box-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'vendor-packages-add',
@@ -225,11 +255,13 @@ export const MENU_ITEMS: MenuItemType[] = [
     label: 'Platform Fees',
     icon: 'solar:settings-minimalistic-bold-duotone',
     url: '/vendor-settings/platform-fees',
+    allowedRoles: ['admin'],
   },
   {
     key: 'vendor-applications',
     label: 'Vendor Applications',
     icon: 'solar:document-add-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'vendor-applications-pending',
@@ -245,10 +277,13 @@ export const MENU_ITEMS: MenuItemType[] = [
       },
     ],
   },
+
+  // ============ USERS (Admin Only) ============
   {
     key: 'users',
     label: 'USERS',
     isTitle: true,
+    allowedRoles: ['admin'],
   },
   {
     key: 'vendors-list',
@@ -256,6 +291,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:user-check-bold-duotone',
     url: '/vendors/vendors-list',
     parentKey: 'users',
+    allowedRoles: ['admin'],
   },
   {
     key: 'vendors-payment-history',
@@ -263,18 +299,21 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:dollar-bold-duotone',
     url: '/vendors/vendors-payment-history',
     parentKey: 'users',
+    allowedRoles: ['admin'],
   },
 
+  // ============ ROLES (Admin Only) ============
   {
     key: 'role',
     label: 'ROLES',
     isTitle: true,
+    allowedRoles: ['admin'],
   },
-
   {
     key: 'access-management',
     label: 'Roles Management',
     icon: 'solar:user-bold-duotone',
+    allowedRoles: ['admin'],
     children: [
       {
         key: 'roles-add',
@@ -291,6 +330,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     ],
   },
 
+  // ============ ENQUIRES (Everyone) ============
   {
     key: 'enquires',
     label: 'ENQUIRES',
@@ -298,23 +338,18 @@ export const MENU_ITEMS: MenuItemType[] = [
   },
   {
     key: 'enquires-list',
-    label: 'Enquires List',
+    label: 'My Enquires',
     icon: 'solar:document-text-bold-duotone',
     url: '/enquires/enquires-list',
     parentKey: 'enquires',
   },
-  // {
-  //   key: 'contact-us',
-  //   label: 'Contact Us Enquiries',
-  //   icon: 'solar:phone-bold-duotone',
-  //   url: '/support/contact-us',
-  //   parentKey: 'enquires',
-  // },
 
+  // ============ SUPPORT (Admin Only) ============
   {
     key: 'support',
     label: 'SUPPORT',
     isTitle: true,
+    allowedRoles: ['admin'],
   },
   {
     key: 'help-center',
@@ -322,6 +357,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:help-bold-duotone',
     url: '/support/help-center',
     parentKey: 'support',
+    allowedRoles: ['admin'],
   },
   {
     key: 'faqs',
@@ -329,6 +365,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:question-circle-bold-duotone',
     url: '/support/faqs',
     parentKey: 'support',
+    allowedRoles: ['admin'],
   },
   {
     key: 'privacy-policy',
@@ -336,6 +373,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:document-text-bold-duotone',
     url: '/support/privacy-policy',
     parentKey: 'support',
+    allowedRoles: ['admin'],
   },
   {
     key: 'terms-conditions',
@@ -343,6 +381,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:document-text-bold-duotone',
     url: '/support/terms-conditions',
     parentKey: 'support',
+    allowedRoles: ['admin'],
   },
 
   {

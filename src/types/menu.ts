@@ -14,6 +14,10 @@ export type MenuItemType = {
   target?: HTMLAttributeAnchorTarget
   isDisabled?: boolean
   children?: MenuItemType[]
+  // Role-based access
+  allowedRoles?: ('admin' | 'vendor' | 'user')[]
+  // Vendor service-based access (for vendors only)
+  allowedServices?: ('film_trade' | 'events' | 'movie_watch')[]
 }
 
 export type SubMenus = {
