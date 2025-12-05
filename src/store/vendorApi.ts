@@ -78,7 +78,7 @@ interface ApiResponse<T> {
 export const vendorApi = createApi({
   reducerPath: 'vendorApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:8080/v1/api',
+    baseUrl: 'https://ifmdb.atpuae.com/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth.token
       if (token) {
