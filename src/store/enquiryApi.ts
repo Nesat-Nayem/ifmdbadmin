@@ -22,7 +22,7 @@ interface EnquiryResponse {
 export const enquiryApi = createApi({
   reducerPath: 'enquiryApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://ifmdb.atpuae.com/v1/api',
+    baseUrl: 'https://api.moviemart.org/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth.token
       if (token) {

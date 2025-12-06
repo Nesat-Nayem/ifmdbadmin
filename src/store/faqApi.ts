@@ -22,7 +22,7 @@ interface FaqResponse {
 export const faqApi = createApi({
   reducerPath: 'faqApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://ifmdb.atpuae.com/v1/api',
+    baseUrl: 'https://api.moviemart.org/v1/api',
     prepareHeaders: (headers, { getState }) => {
       // Get token from state
       const token = (getState() as IRootState).auth.token
