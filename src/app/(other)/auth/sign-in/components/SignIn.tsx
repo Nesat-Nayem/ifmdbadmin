@@ -1,13 +1,19 @@
 'use client'
-import logoDark from '@/assets/images/logo.png'
-import logoLight from '@/assets/images/logo.png'
+import defaultLogo from '@/assets/images/logo.png'
 import smallImg from '@/assets/images/banner/login.jpg'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Card, Col, Row } from 'react-bootstrap'
 import LoginFrom from './LoginFrom'
+import { useGetGeneralSettingsQuery } from '@/store/generalSettingsApi'
 
 const SignIn = () => {
+  const { data: generalSettings } = useGetGeneralSettingsQuery()
+  
+  // Use dynamic logo from settings or fallback to default
+  const logoUrl = generalSettings?.logo || defaultLogo
+  const isExternal = typeof logoUrl === 'string' && (logoUrl.includes('cloudinary') || logoUrl.includes('http'))
+
   return (
     <div className="min-vh-100 d-flex flex-column bg-light">
       <Card
@@ -19,7 +25,7 @@ const SignIn = () => {
             <div style={{ maxWidth: '400px', width: '100%', height: '100%' }}>
               <div className="text-center mb-4">
                 <Link href="/dashboard" className="d-inline-block mb-3">
-                  <Image src={logoDark} height={50} alt="logo" />
+                  <Image src={logoUrl} height={50} width={50} alt="logo" unoptimized={isExternal} />
                 </Link>
                 <h2 className="fw-bold fs-24">Welcome Back 👋</h2>
                 <p className="text-muted">Enter your email & password to access the admin panel</p>
