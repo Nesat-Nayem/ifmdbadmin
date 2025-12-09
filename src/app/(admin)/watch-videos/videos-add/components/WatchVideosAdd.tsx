@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardBody, CardHeader, CardTitle, Form, Button, Row, Col, Spinner, Toast, ToastContainer, Tab, Tabs } from 'react-bootstrap'
+import { Card, CardBody, CardHeader, CardTitle, Form, Button, Row, Col, Spinner, Toast, ToastContainer, Tab, Tabs, Badge } from 'react-bootstrap'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -10,6 +10,37 @@ import { FaPlus, FaTrash, FaSave } from 'react-icons/fa'
 import { useCreateWatchVideoMutation, useGetWatchVideoCategoriesQuery, useGetChannelsQuery } from '@/store/watchVideosApi'
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
+
+// Country list with codes and currencies
+const COUNTRIES = [
+  { code: 'IN', name: 'India', currency: 'INR' },
+  { code: 'US', name: 'United States', currency: 'USD' },
+  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+  { code: 'CA', name: 'Canada', currency: 'CAD' },
+  { code: 'AU', name: 'Australia', currency: 'AUD' },
+  { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
+  { code: 'SG', name: 'Singapore', currency: 'SGD' },
+  { code: 'DE', name: 'Germany', currency: 'EUR' },
+  { code: 'FR', name: 'France', currency: 'EUR' },
+  { code: 'JP', name: 'Japan', currency: 'JPY' },
+  { code: 'BD', name: 'Bangladesh', currency: 'BDT' },
+  { code: 'PK', name: 'Pakistan', currency: 'PKR' },
+  { code: 'LK', name: 'Sri Lanka', currency: 'LKR' },
+  { code: 'NP', name: 'Nepal', currency: 'NPR' },
+  { code: 'MY', name: 'Malaysia', currency: 'MYR' },
+  { code: 'ID', name: 'Indonesia', currency: 'IDR' },
+  { code: 'TH', name: 'Thailand', currency: 'THB' },
+  { code: 'PH', name: 'Philippines', currency: 'PHP' },
+  { code: 'SA', name: 'Saudi Arabia', currency: 'SAR' },
+  { code: 'QA', name: 'Qatar', currency: 'QAR' },
+  { code: 'KW', name: 'Kuwait', currency: 'KWD' },
+  { code: 'OM', name: 'Oman', currency: 'OMR' },
+  { code: 'BH', name: 'Bahrain', currency: 'BHD' },
+  { code: 'EG', name: 'Egypt', currency: 'EGP' },
+  { code: 'NG', name: 'Nigeria', currency: 'NGN' },
+  { code: 'KE', name: 'Kenya', currency: 'KES' },
+  { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
+]
 
 // Validation schema
 const schema = yup.object().shape({
@@ -49,6 +80,28 @@ interface ICrew {
   image: string
 }
 
+interface IEpisode {
+  episodeNumber: number
+  title: string
+  description: string
+  videoUrl: string
+  thumbnailUrl: string
+  duration: number
+  releaseDate?: string
+  isFree: boolean
+  price: number
+  isActive: boolean
+}
+
+interface ISeason {
+  seasonNumber: number
+  title: string
+  description: string
+  episodes: IEpisode[]
+  releaseDate?: string
+  isActive: boolean
+}
+
 const WatchVideosAdd = () => {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('basic')
@@ -65,6 +118,8 @@ const WatchVideosAdd = () => {
   const [countryPricing, setCountryPricing] = useState<ICountryPricing[]>([])
   const [cast, setCast] = useState<ICast[]>([])
   const [crew, setCrew] = useState<ICrew[]>([])
+  const [seasons, setSeasons] = useState<ISeason[]>([])
+  const [countrySearch, setCountrySearch] = useState('')
   
   // Media states
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
@@ -73,6 +128,10 @@ const WatchVideosAdd = () => {
   const [trailerUrl, setTrailerUrl] = useState('')
   const [cloudflareVideoUid, setCloudflareVideoUid] = useState('')
   const [cloudflareTrailerUid, setCloudflareTrailerUid] = useState('')
+  const [thumbnailUploading, setThumbnailUploading] = useState(false)
+  const [posterUploading, setPosterUploading] = useState(false)
+  const [castImageUploading, setCastImageUploading] = useState<number | null>(null)
+  const [crewImageUploading, setCrewImageUploading] = useState<number | null>(null)
 
   // Fetch data
   const { data: categories = [] } = useGetWatchVideoCategoriesQuery()
@@ -135,8 +194,23 @@ const WatchVideosAdd = () => {
     setTags(tags.filter((_, i) => i !== index))
   }
 
-  const addCountryPricing = () => {
-    setCountryPricing([...countryPricing, { countryCode: '', countryName: '', currency: 'INR', price: 0, isActive: true }])
+  // Filtered countries for search
+  const filteredCountries = COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    c.code.toLowerCase().includes(countrySearch.toLowerCase())
+  )
+
+  const addCountryPricing = (country: typeof COUNTRIES[0]) => {
+    if (!countryPricing.find(cp => cp.countryCode === country.code)) {
+      setCountryPricing([...countryPricing, {
+        countryCode: country.code,
+        countryName: country.name,
+        currency: country.currency,
+        price: 0,
+        isActive: true
+      }])
+    }
+    setCountrySearch('')
   }
 
   const removeCountryPricing = (index: number) => {
@@ -163,6 +237,18 @@ const WatchVideosAdd = () => {
     setCast(updated)
   }
 
+  const handleCastImageUpload = async (index: number, file: File) => {
+    setCastImageUploading(index)
+    try {
+      const url = await uploadSingle(file).unwrap()
+      updateCastMember(index, 'image', url)
+    } catch (error) {
+      console.error('Failed to upload cast image:', error)
+    } finally {
+      setCastImageUploading(null)
+    }
+  }
+
   const addCrewMember = () => {
     setCrew([...crew, { name: '', designation: '', image: '' }])
   }
@@ -175,6 +261,62 @@ const WatchVideosAdd = () => {
     const updated = [...crew]
     updated[index] = { ...updated[index], [field]: value }
     setCrew(updated)
+  }
+
+  const handleCrewImageUpload = async (index: number, file: File) => {
+    setCrewImageUploading(index)
+    try {
+      const url = await uploadSingle(file).unwrap()
+      updateCrewMember(index, 'image', url)
+    } catch (error) {
+      console.error('Failed to upload crew image:', error)
+    } finally {
+      setCrewImageUploading(null)
+    }
+  }
+
+  // Season/Episode handlers
+  const addSeason = () => {
+    setSeasons([...seasons, {
+      seasonNumber: seasons.length + 1,
+      title: `Season ${seasons.length + 1}`,
+      description: '',
+      episodes: [],
+      isActive: true
+    }])
+  }
+  const removeSeason = (index: number) => setSeasons(seasons.filter((_, i) => i !== index))
+  const updateSeason = (index: number, field: keyof ISeason, value: any) => {
+    const updated = [...seasons]
+    updated[index] = { ...updated[index], [field]: value }
+    setSeasons(updated)
+  }
+
+  const addEpisode = (seasonIndex: number) => {
+    const updated = [...seasons]
+    const episodeNum = updated[seasonIndex].episodes.length + 1
+    updated[seasonIndex].episodes.push({
+      episodeNumber: episodeNum,
+      title: `Episode ${episodeNum}`,
+      description: '',
+      videoUrl: '',
+      thumbnailUrl: '',
+      duration: 0,
+      isFree: false,
+      price: 0,
+      isActive: true
+    })
+    setSeasons(updated)
+  }
+  const removeEpisode = (seasonIndex: number, episodeIndex: number) => {
+    const updated = [...seasons]
+    updated[seasonIndex].episodes = updated[seasonIndex].episodes.filter((_, i) => i !== episodeIndex)
+    setSeasons(updated)
+  }
+  const updateEpisode = (seasonIndex: number, episodeIndex: number, field: keyof IEpisode, value: any) => {
+    const updated = [...seasons]
+    updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
+    setSeasons(updated)
   }
 
   // Submit handler
@@ -219,6 +361,7 @@ const WatchVideosAdd = () => {
         countryPricing,
         cast,
         crew,
+        seasons: values.videoType === 'series' ? seasons as any : [],
         thumbnailUrl: thumbnailUrl || '/assets/images/placeholder.png',
         posterUrl: posterUrl || '/assets/images/placeholder.png',
         videoUrl,
@@ -459,39 +602,43 @@ const WatchVideosAdd = () => {
                   <Col md={12}>
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h6>Country-wise Pricing</h6>
-                      <Button size="sm" variant="outline-primary" onClick={addCountryPricing}>
-                        <FaPlus className="me-1" /> Add Country
-                      </Button>
                     </div>
+                    {/* Country Search Dropdown */}
+                    <div className="mb-3 position-relative">
+                      <Form.Control
+                        placeholder="Search country to add..."
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                      />
+                      {countrySearch && (
+                        <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: 200, overflowY: 'auto' }}>
+                          {filteredCountries.map(country => (
+                            <div
+                              key={country.code}
+                              className="p-2"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => addCountryPricing(country)}
+                            >
+                              <strong>{country.name}</strong> ({country.code}) - {country.currency}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {/* Country Pricing List */}
                     {countryPricing.map((cp, index) => (
-                      <Row key={index} className="mb-2 align-items-end">
-                        <Col md={2}>
-                          <Form.Control 
-                            placeholder="Code (IN)" 
-                            value={cp.countryCode}
-                            onChange={(e) => updateCountryPricing(index, 'countryCode', e.target.value.toUpperCase())}
-                          />
+                      <Row key={index} className="mb-2 align-items-center">
+                        <Col md={3}>
+                          <span className="badge bg-secondary me-2">{cp.countryCode}</span>
+                          {cp.countryName}
                         </Col>
                         <Col md={3}>
-                          <Form.Control 
-                            placeholder="Country Name"
-                            value={cp.countryName}
-                            onChange={(e) => updateCountryPricing(index, 'countryName', e.target.value)}
-                          />
-                        </Col>
-                        <Col md={2}>
-                          <Form.Control 
-                            placeholder="Currency"
-                            value={cp.currency}
-                            onChange={(e) => updateCountryPricing(index, 'currency', e.target.value.toUpperCase())}
-                          />
-                        </Col>
-                        <Col md={2}>
                           <Form.Control 
                             type="number"
                             placeholder="Price"
                             value={cp.price}
                             onChange={(e) => updateCountryPricing(index, 'price', Number(e.target.value))}
+                            size="sm"
                           />
                         </Col>
                         <Col md={2}>
@@ -502,7 +649,7 @@ const WatchVideosAdd = () => {
                             onChange={(e) => updateCountryPricing(index, 'isActive', e.target.checked)}
                           />
                         </Col>
-                        <Col md={1}>
+                        <Col md={2}>
                           <Button size="sm" variant="outline-danger" onClick={() => removeCountryPricing(index)}>
                             <FaTrash />
                           </Button>
@@ -693,6 +840,139 @@ const WatchVideosAdd = () => {
                   </Col>
                 </Row>
               </Tab>
+
+              {/* Series/Episodes Tab - Only show for series type */}
+              {videoType === 'series' && (
+                <Tab eventKey="episodes" title="Seasons & Episodes">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6>Manage Seasons & Episodes</h6>
+                    <Button variant="outline-primary" onClick={addSeason}>
+                      <FaPlus className="me-1" /> Add Season
+                    </Button>
+                  </div>
+                  {seasons.map((season, sIndex) => (
+                    <Card key={sIndex} className="mb-3">
+                      <CardHeader className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center gap-3">
+                          <strong>Season {season.seasonNumber}</strong>
+                          <Form.Control
+                            size="sm"
+                            placeholder="Season Title"
+                            value={season.title}
+                            onChange={(e) => updateSeason(sIndex, 'title', e.target.value)}
+                            style={{ width: 200 }}
+                          />
+                        </div>
+                        <div className="d-flex gap-2">
+                          <Form.Check
+                            type="switch"
+                            label="Active"
+                            checked={season.isActive}
+                            onChange={(e) => updateSeason(sIndex, 'isActive', e.target.checked)}
+                          />
+                          <Button size="sm" variant="outline-danger" onClick={() => removeSeason(sIndex)}>
+                            <FaTrash />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardBody>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">{season.episodes.length} Episode(s)</span>
+                          <Button size="sm" variant="outline-success" onClick={() => addEpisode(sIndex)}>
+                            <FaPlus className="me-1" /> Add Episode
+                          </Button>
+                        </div>
+                        {season.episodes.map((episode, eIndex) => (
+                          <Card key={eIndex} className="mb-3 border">
+                            <CardBody className="py-3">
+                              <Row className="align-items-center mb-2">
+                                <Col md={1}>
+                                  <Badge bg={episode.isFree ? 'success' : 'warning'}>
+                                    E{episode.episodeNumber}
+                                  </Badge>
+                                </Col>
+                                <Col md={4}>
+                                  <Form.Control
+                                    size="sm"
+                                    placeholder="Episode Title"
+                                    value={episode.title}
+                                    onChange={(e) => updateEpisode(sIndex, eIndex, 'title', e.target.value)}
+                                  />
+                                </Col>
+                                <Col md={2}>
+                                  <Form.Control
+                                    size="sm"
+                                    type="number"
+                                    placeholder="Duration (sec)"
+                                    value={episode.duration}
+                                    onChange={(e) => updateEpisode(sIndex, eIndex, 'duration', Number(e.target.value))}
+                                  />
+                                </Col>
+                                <Col md={3}>
+                                  <div className="d-flex align-items-center gap-2">
+                                    <Form.Check
+                                      type="switch"
+                                      id={`add-free-switch-${sIndex}-${eIndex}`}
+                                      label={episode.isFree ? 'Free' : 'Paid'}
+                                      checked={episode.isFree}
+                                      onChange={(e) => updateEpisode(sIndex, eIndex, 'isFree', e.target.checked)}
+                                      className="text-nowrap"
+                                    />
+                                    {!episode.isFree && (
+                                      <Form.Control
+                                        size="sm"
+                                        type="number"
+                                        placeholder="Price"
+                                        value={episode.price}
+                                        onChange={(e) => updateEpisode(sIndex, eIndex, 'price', Number(e.target.value))}
+                                        style={{ width: 80 }}
+                                        min={0}
+                                      />
+                                    )}
+                                  </div>
+                                </Col>
+                                <Col md={2} className="text-end">
+                                  <Form.Check
+                                    type="switch"
+                                    inline
+                                    title="Active"
+                                    checked={episode.isActive}
+                                    onChange={(e) => updateEpisode(sIndex, eIndex, 'isActive', e.target.checked)}
+                                  />
+                                  <Button size="sm" variant="outline-danger" onClick={() => removeEpisode(sIndex, eIndex)}>
+                                    <FaTrash />
+                                  </Button>
+                                </Col>
+                              </Row>
+                              <Row className="align-items-center">
+                                <Col md={8}>
+                                  <CloudflareVideoUploader
+                                    onUploadComplete={(uid: string, url: string) => {
+                                      updateEpisode(sIndex, eIndex, 'videoUrl', url)
+                                    }}
+                                    uploadType="main"
+                                    existingUid=""
+                                  />
+                                </Col>
+                                <Col md={4}>
+                                  {episode.videoUrl && (
+                                    <small className="text-success">✅ Video uploaded</small>
+                                  )}
+                                </Col>
+                              </Row>
+                            </CardBody>
+                          </Card>
+                        ))}
+                      </CardBody>
+                    </Card>
+                  ))}
+                  {seasons.length === 0 && (
+                    <div className="text-center text-muted py-4">
+                      No seasons added yet. Click "Add Season" to start adding episodes.
+                    </div>
+                  )}
+                </Tab>
+              )}
             </Tabs>
 
             {/* Submit Button */}
