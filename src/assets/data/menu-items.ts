@@ -162,6 +162,56 @@ export const MENU_ITEMS: MenuItemType[] = [
     ],
   },
 
+  // ============ WATCH VIDEOS (Admin + Movie Watch Vendors) ============
+  {
+    key: 'watch-videos',
+    icon: 'solar:play-bold-duotone',
+    label: 'Watch Videos',
+    allowedRoles: ['admin', 'vendor'],
+    allowedServices: ['movie_watch'],
+    children: [
+      {
+        key: 'watch-videos-category-add',
+        label: 'Create Category',
+        url: '/watch-videos/category-add',
+        parentKey: 'watch-videos',
+        allowedRoles: ['admin'],
+      },
+      {
+        key: 'watch-videos-category-list',
+        label: 'Category List',
+        url: '/watch-videos/category-list',
+        parentKey: 'watch-videos',
+        allowedRoles: ['admin'],
+      },
+      {
+        key: 'watch-videos-channels',
+        label: 'Channels',
+        url: '/watch-videos/channels-list',
+        parentKey: 'watch-videos',
+      },
+      {
+        key: 'watch-videos-add',
+        label: 'Add Video',
+        url: '/watch-videos/videos-add',
+        parentKey: 'watch-videos',
+      },
+      {
+        key: 'watch-videos-list',
+        label: 'My Videos',
+        url: '/watch-videos/videos-list',
+        parentKey: 'watch-videos',
+      },
+      {
+        key: 'watch-videos-purchases',
+        label: 'Video Purchases',
+        url: '/watch-videos/purchases',
+        parentKey: 'watch-videos',
+        allowedRoles: ['admin'],
+      },
+    ],
+  },
+
   // ============ ADMIN ONLY ============
   {
     key: 'advertise',
