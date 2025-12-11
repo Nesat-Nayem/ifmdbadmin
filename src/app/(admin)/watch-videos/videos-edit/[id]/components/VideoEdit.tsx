@@ -1113,7 +1113,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                   ))}
                   {seasons.length === 0 && (
                     <div className="text-center text-muted py-4">
-                      No seasons added yet. Click "Add Season" to start adding episodes.
+                      No seasons added yet. Click &quot;Add Season&quot; to start adding episodes.
                     </div>
                   )}
                 </Tab>
