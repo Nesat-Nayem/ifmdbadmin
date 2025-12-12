@@ -28,7 +28,7 @@ const SignIn = () => {
                   <Image src={logoUrl} height={50} width={50} alt="logo" unoptimized={isExternal} />
                 </Link>
                 <h2 className="fw-bold fs-24">Welcome Back 👋</h2>
-                <p className="text-muted">Enter your email & password to access the admin panel</p>
+                <p className="text-muted">Enter your email & password to access the panel</p>
               </div>
               <LoginFrom />
             </div>
