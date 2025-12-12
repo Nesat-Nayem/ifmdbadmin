@@ -21,7 +21,7 @@ const ProfileDropdown = () => {
       </DropdownToggle>
       <DropdownMenu className="dropdown-menu-end">
         <DropdownHeader as={'h6'} className="dropdown-header">
-          Welcome IFDB!
+          Welcome Moviemart!
         </DropdownHeader>
 
         <div className="dropdown-divider my-1" />

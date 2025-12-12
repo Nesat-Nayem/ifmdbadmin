@@ -16,10 +16,10 @@ const play = Play({
 
 export const metadata: Metadata = {
   title: {
-    template: 'IFDB | Admin ',
+    template: 'Moviemart | Admin ',
     default: DEFAULT_PAGE_TITLE,
   },
-  description: 'IFDB Admin',
+  description: 'Moviemart Admin',
 }
 
 const splashScreenStyles = `
