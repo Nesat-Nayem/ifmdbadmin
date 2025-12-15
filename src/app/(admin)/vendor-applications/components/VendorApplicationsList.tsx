@@ -166,7 +166,7 @@ const VendorApplicationsList = ({ status }: Props) => {
                 <div className="col-md-6"><strong>Business:</strong> {viewModal.app.businessType}</div>
                 <div className="col-md-6"><strong>Email:</strong> {viewModal.app.email}</div>
                 <div className="col-md-6"><strong>Phone:</strong> {viewModal.app.phone}</div>
-                <div className="col-md-6"><strong>PAN:</strong> {viewModal.app.panNumber}</div>
+                <div className="col-md-6"><strong>Country:</strong> {viewModal.app.country || 'IN'}</div>
                 <div className="col-md-6"><strong>GST:</strong> {viewModal.app.gstNumber || 'N/A'}</div>
                 <div className="col-12"><strong>Address:</strong> {viewModal.app.address}</div>
               </div>
@@ -185,9 +185,15 @@ const VendorApplicationsList = ({ status }: Props) => {
 
               <h6>KYC Documents</h6>
               <div className="d-flex gap-3 flex-wrap">
-                {viewModal.app.aadharFrontUrl && <img src={viewModal.app.aadharFrontUrl} alt="Aadhar Front" style={{ height: 100, borderRadius: 8 }} />}
-                {viewModal.app.aadharBackUrl && <img src={viewModal.app.aadharBackUrl} alt="Aadhar Back" style={{ height: 100, borderRadius: 8 }} />}
-                {viewModal.app.panImageUrl && <img src={viewModal.app.panImageUrl} alt="PAN" style={{ height: 100, borderRadius: 8 }} />}
+                {/* India KYC */}
+                {viewModal.app.aadharFrontUrl && <div className="text-center"><img src={viewModal.app.aadharFrontUrl} alt="Aadhar Front" style={{ height: 100, borderRadius: 8 }} /><small className="d-block mt-1">Aadhar Front</small></div>}
+                {viewModal.app.aadharBackUrl && <div className="text-center"><img src={viewModal.app.aadharBackUrl} alt="Aadhar Back" style={{ height: 100, borderRadius: 8 }} /><small className="d-block mt-1">Aadhar Back</small></div>}
+                {viewModal.app.panImageUrl && <div className="text-center"><img src={viewModal.app.panImageUrl} alt="PAN" style={{ height: 100, borderRadius: 8 }} /><small className="d-block mt-1">PAN Card</small></div>}
+                {/* International KYC */}
+                {viewModal.app.nationalIdUrl && <div className="text-center"><img src={viewModal.app.nationalIdUrl} alt="National ID" style={{ height: 100, borderRadius: 8 }} /><small className="d-block mt-1">National ID</small></div>}
+                {viewModal.app.passportUrl && <div className="text-center"><img src={viewModal.app.passportUrl} alt="Passport" style={{ height: 100, borderRadius: 8 }} /><small className="d-block mt-1">Passport</small></div>}
+                {/* No documents */}
+                {!viewModal.app.aadharFrontUrl && !viewModal.app.aadharBackUrl && !viewModal.app.panImageUrl && !viewModal.app.nationalIdUrl && !viewModal.app.passportUrl && <span className="text-muted">No documents uploaded</span>}
               </div>
             </div>
           )}

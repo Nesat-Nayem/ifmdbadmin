@@ -49,13 +49,17 @@ export interface IVendorApplication {
   vendorName: string
   businessType: string
   gstNumber?: string
-  panNumber: string
+  country: string
   address: string
   email: string
   phone: string
+  // India specific KYC
   aadharFrontUrl?: string
   aadharBackUrl?: string
   panImageUrl?: string
+  // International KYC
+  nationalIdUrl?: string
+  passportUrl?: string
   selectedServices: ISelectedService[]
   paymentInfo?: IPaymentInfo
   requiresPayment: boolean
