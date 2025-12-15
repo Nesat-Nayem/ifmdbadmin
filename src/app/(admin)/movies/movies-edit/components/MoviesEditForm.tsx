@@ -98,6 +98,56 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
   const [cast, setCast] = useState<Array<{ name: string; type?: string; image?: string }>>([{ name: '', type: '', image: '' }])
   const [crew, setCrew] = useState<Array<{ name: string; designation?: string; image?: string }>>([{ name: '', designation: '', image: '' }])
 
+  // Country pricing state
+  const [countryPricing, setCountryPricing] = useState<Array<{
+    countryCode: string;
+    countryName: string;
+    currency: string;
+    askingPrice: number;
+    negotiable: boolean;
+    notes: string;
+  }>>([{ countryCode: '', countryName: '', currency: '', askingPrice: 0, negotiable: true, notes: '' }])
+
+  const addCountryPricing = () => {
+    setCountryPricing((prev) => [...prev, { countryCode: '', countryName: '', currency: '', askingPrice: 0, negotiable: true, notes: '' }])
+  }
+
+  const removeCountryPricing = (index: number) => {
+    setCountryPricing((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleCountryPricingChange = (index: number, field: string, value: any) => {
+    setCountryPricing((prev) => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  // Country options with currency
+  const countryOptions = [
+    { code: 'IN', name: 'India', currency: 'INR' },
+    { code: 'US', name: 'United States', currency: 'USD' },
+    { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+    { code: 'AE', name: 'UAE', currency: 'AED' },
+    { code: 'AU', name: 'Australia', currency: 'AUD' },
+    { code: 'CA', name: 'Canada', currency: 'CAD' },
+    { code: 'DE', name: 'Germany', currency: 'EUR' },
+    { code: 'FR', name: 'France', currency: 'EUR' },
+    { code: 'JP', name: 'Japan', currency: 'JPY' },
+    { code: 'CN', name: 'China', currency: 'CNY' },
+    { code: 'SG', name: 'Singapore', currency: 'SGD' },
+    { code: 'MY', name: 'Malaysia', currency: 'MYR' },
+    { code: 'SA', name: 'Saudi Arabia', currency: 'SAR' },
+    { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
+    { code: 'BR', name: 'Brazil', currency: 'BRL' },
+    { code: 'RU', name: 'Russia', currency: 'RUB' },
+    { code: 'KR', name: 'South Korea', currency: 'KRW' },
+    { code: 'NZ', name: 'New Zealand', currency: 'NZD' },
+    { code: 'BD', name: 'Bangladesh', currency: 'BDT' },
+    { code: 'PK', name: 'Pakistan', currency: 'PKR' },
+  ]
+
   const addCast = () => setCast((prev) => [...prev, { name: '', type: '', image: '' }])
   const removeCast = (index: number) => setCast((prev) => prev.filter((_, i) => i !== index))
   const handleCastChange = (index: number, field: keyof (typeof cast)[number], value: any) =>
@@ -249,6 +299,19 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       setCrew(((movie as any).crew || []).map((c: any) => ({ name: c.name || '', designation: c.designation || '', image: c.image || '' })) || [
         { name: '', designation: '', image: '' },
       ])
+      
+      // Prefill country pricing
+      const existingPricing = (movie as any).countryPricing || []
+      if (existingPricing.length > 0) {
+        setCountryPricing(existingPricing.map((p: any) => ({
+          countryCode: p.countryCode || '',
+          countryName: p.countryName || '',
+          currency: p.currency || '',
+          askingPrice: p.askingPrice || 0,
+          negotiable: p.negotiable ?? true,
+          notes: p.notes || '',
+        })))
+      }
     }
   }, [movie, reset])
 
@@ -298,6 +361,15 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       payload.cast = cast.map((c) => ({ name: c.name, type: c.type, image: c.image }))
       payload.crew = crew.map((c) => ({ name: c.name, designation: c.designation, image: c.image }))
       payload.homeSection = values.homeSection || ''
+      // Include country pricing
+      payload.countryPricing = countryPricing.filter((p) => p.countryCode).map((p) => ({
+        countryCode: p.countryCode,
+        countryName: p.countryName,
+        currency: p.currency,
+        askingPrice: Number(p.askingPrice) || 0,
+        negotiable: p.negotiable ?? true,
+        notes: p.notes || '',
+      }))
       await updateMovie({ id, data: payload }).unwrap()
       setToastMessage('Movie updated successfully!')
       setToastVariant('success')
@@ -1226,6 +1298,100 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                     </Col>
                   ))}
                 </Row>
+              </CardBody>
+            </Card>
+
+            {/* Country-wise Asking Price Section */}
+            <Card className="mt-4 border">
+              <CardHeader className="d-flex justify-content-between align-items-center bg-light">
+                <CardTitle as="h5" className="mb-0">
+                  <span className="me-2">💰</span> Country-wise Asking Price
+                </CardTitle>
+                <button type="button" className="btn btn-sm btn-primary d-flex align-items-center gap-1" onClick={addCountryPricing}>
+                  <span>+</span> Add Country
+                </button>
+              </CardHeader>
+              <CardBody>
+                <p className="text-muted mb-3">Set different asking prices for film rights in different countries</p>
+                {countryPricing.map((pricing, index) => (
+                  <Row key={`pricing-${index}`} className="align-items-end mb-3 p-3 bg-light rounded position-relative">
+                    {countryPricing.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger position-absolute"
+                        style={{ top: 8, right: 8, width: 30 }}
+                        onClick={() => removeCountryPricing(index)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                    <Col lg={3} md={6}>
+                      <label className="form-label">Country</label>
+                      <select
+                        className="form-select"
+                        value={pricing.countryCode}
+                        onChange={(e) => {
+                          const selected = countryOptions.find(c => c.code === e.target.value)
+                          if (selected) {
+                            handleCountryPricingChange(index, 'countryCode', selected.code)
+                            handleCountryPricingChange(index, 'countryName', selected.name)
+                            handleCountryPricingChange(index, 'currency', selected.currency)
+                          }
+                        }}
+                      >
+                        <option value="">Select Country</option>
+                        {countryOptions.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Col>
+                    <Col lg={2} md={3}>
+                      <label className="form-label">Currency</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={pricing.currency}
+                        readOnly
+                        placeholder="Auto"
+                      />
+                    </Col>
+                    <Col lg={2} md={3}>
+                      <label className="form-label">Asking Price</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={pricing.askingPrice}
+                        onChange={(e) => handleCountryPricingChange(index, 'askingPrice', Number(e.target.value))}
+                        placeholder="0"
+                        min="0"
+                      />
+                    </Col>
+                    <Col lg={2} md={3}>
+                      <label className="form-label">Negotiable</label>
+                      <div className="form-check mt-2">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={pricing.negotiable}
+                          onChange={(e) => handleCountryPricingChange(index, 'negotiable', e.target.checked)}
+                        />
+                        <label className="form-check-label">Yes</label>
+                      </div>
+                    </Col>
+                    <Col lg={3} md={6}>
+                      <label className="form-label">Notes</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={pricing.notes}
+                        onChange={(e) => handleCountryPricingChange(index, 'notes', e.target.value)}
+                        placeholder="Optional notes"
+                      />
+                    </Col>
+                  </Row>
+                ))}
               </CardBody>
             </Card>
 
