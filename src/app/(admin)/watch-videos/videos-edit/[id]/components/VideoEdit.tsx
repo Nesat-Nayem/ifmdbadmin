@@ -93,6 +93,7 @@ const schema = yup.object().shape({
   rentalDays: yup.number().transform((value, originalValue) => 
     originalValue === '' ? 0 : value
   ).min(0).optional(),
+  homeSection: yup.string().oneOf(['', 'trending_now', 'most_popular', 'exclusive_on_moviemart', 'new_release']).optional(),
 })
 
 type FormValues = yup.InferType<typeof schema>
@@ -223,6 +224,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
         isFree: video.isFree,
         defaultPrice: video.defaultPrice,
         rentalDays: video.rentalDays,
+        homeSection: video.homeSection || '',
       })
 
       // Set media URLs
@@ -425,6 +427,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
         posterUrl: posterUrl || video?.posterUrl,
         videoUrl: videoUrl || video?.videoUrl,
         trailerUrl: trailerUrl || video?.trailerUrl,
+        homeSection: values.homeSection || '',
       }
 
       console.log('Updating video with data:', updateData)
@@ -707,7 +710,18 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                       <Form.Check type="switch" label="Featured Video" {...register('isFeatured')} />
                     </Form.Group>
                   </Col>
-                  <Col md={4}></Col>
+                  <Col md={4}>
+                    <Form.Group>
+                      <Form.Label>Home Page Section</Form.Label>
+                      <Form.Select {...register('homeSection')}>
+                        <option value="">-- Not Featured on Home --</option>
+                        <option value="trending_now">Trending Now</option>
+                        <option value="most_popular">Most Popular</option>
+                        <option value="exclusive_on_moviemart">Exclusive on Movie Mart</option>
+                        <option value="new_release">New Release</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
                   {!isFree && (
                     <>
                       <Col md={4}>

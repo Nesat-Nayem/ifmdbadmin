@@ -56,6 +56,7 @@ const schema = yup.object().shape({
   isFree: yup.boolean().default(false),
   defaultPrice: yup.number().min(0).default(0),
   isFeatured: yup.boolean().default(false),
+  homeSection: yup.string().oneOf(['', 'trending_now', 'most_popular', 'exclusive_on_moviemart', 'new_release']).optional(),
 })
 
 type FormValues = yup.InferType<typeof schema>
@@ -157,6 +158,7 @@ const WatchVideosAdd = () => {
       isFree: false,
       defaultPrice: 0,
       isFeatured: false,
+      homeSection: '',
     },
   })
 
@@ -368,6 +370,7 @@ const WatchVideosAdd = () => {
         trailerUrl,
         uploadedBy: user._id,
         uploadedByType: user.role === 'admin' ? 'admin' as const : 'vendor' as const,
+        homeSection: values.homeSection || '',
       }
 
       await createVideo(videoData).unwrap()
@@ -493,6 +496,19 @@ const WatchVideosAdd = () => {
                   <Col md={4}>
                     <Form.Group>
                       <Form.Check type="checkbox" label="Featured Video" {...register('isFeatured')} />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6} className="mt-3">
+                    <Form.Group>
+                      <Form.Label>Home Page Section</Form.Label>
+                      <Form.Select {...register('homeSection')}>
+                        <option value="">-- Not Featured on Home --</option>
+                        <option value="trending_now">Trending Now</option>
+                        <option value="most_popular">Most Popular</option>
+                        <option value="exclusive_on_moviemart">Exclusive on Movie Mart</option>
+                        <option value="new_release">New Release</option>
+                      </Form.Select>
+                      <Form.Text className="text-muted">Select a section to feature this video on the home page</Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>

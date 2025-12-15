@@ -48,6 +48,7 @@ type FormValues = {
   country?: string
   phone?: string
   email?: string
+  homeSection?: '' | 'hot_rights_available' | 'profitable_picks' | 'international_deals' | 'indie_gems'
 }
 
 const schema = yup.object({
@@ -80,6 +81,7 @@ const schema = yup.object({
   tags: yup.array(yup.string()).optional(),
   awards: yup.array(yup.string()).optional(),
   isActive: yup.boolean().optional(),
+  homeSection: yup.string().oneOf(['', 'hot_rights_available', 'profitable_picks', 'international_deals', 'indie_gems']).optional(),
 })
 
 const MoviesEditForm: React.FC<Props> = ({ id }) => {
@@ -191,6 +193,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       country: '',
       phone: '',
       email: '',
+      homeSection: '',
     },
   })
 
@@ -231,6 +234,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
         tags: (movie as any).tags || [],
         awards: (movie as any).awards || [],
         isActive: (movie as any).isActive ?? true,
+        homeSection: (movie as any).homeSection || '',
         productionhouse: movie.company?.productionHouse || '',
         website: movie.company?.website || '',
         address: movie.company?.address || '',
@@ -293,6 +297,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       // Include simple cast/crew arrays
       payload.cast = cast.map((c) => ({ name: c.name, type: c.type, image: c.image }))
       payload.crew = crew.map((c) => ({ name: c.name, designation: c.designation, image: c.image }))
+      payload.homeSection = values.homeSection || ''
       await updateMovie({ id, data: payload }).unwrap()
       setToastMessage('Movie updated successfully!')
       setToastVariant('success')
@@ -1033,6 +1038,27 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                       </div>
                     )}
                   />
+                </div>
+              </Col>
+
+              {/* Home Section */}
+              <Col lg={6}>
+                <div className="mb-3">
+                  <label className="form-label">Home Page Section</label>
+                  <Controller
+                    control={control}
+                    name="homeSection"
+                    render={({ field }) => (
+                      <select {...field} className="form-control form-select">
+                        <option value="">-- Not Featured on Home --</option>
+                        <option value="hot_rights_available">Hot Rights Available</option>
+                        <option value="profitable_picks">Profitable Picks</option>
+                        <option value="international_deals">International Deals</option>
+                        <option value="indie_gems">Indie Gems</option>
+                      </select>
+                    )}
+                  />
+                  <small className="text-muted">Select a section to feature this movie on the home page</small>
                 </div>
               </Col>
             </Row>

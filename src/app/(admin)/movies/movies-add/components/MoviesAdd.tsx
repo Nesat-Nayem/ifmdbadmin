@@ -810,6 +810,27 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue }: General
               </div>
             </Col>
 
+            {/* Home Section */}
+            <Col lg={6}>
+              <div className="mb-3">
+                <label className="form-label">Home Page Section</label>
+                <Controller
+                  control={control}
+                  name="homeSection"
+                  render={({ field }) => (
+                    <select {...field} className="form-control form-select">
+                      <option value="">-- Not Featured on Home --</option>
+                      <option value="hot_rights_available">Hot Rights Available</option>
+                      <option value="profitable_picks">Profitable Picks</option>
+                      <option value="international_deals">International Deals</option>
+                      <option value="indie_gems">Indie Gems</option>
+                    </select>
+                  )}
+                />
+                <small className="text-muted">Select a section to feature this movie on the home page</small>
+              </div>
+            </Col>
+
             {/* Description */}
             <Col lg={12}>
               <div className="mb-3">
@@ -1127,6 +1148,7 @@ const MoviesAdd = () => {
     productionCost: yup.number().min(0).optional(),
     uaCertification: yup.string().optional(),
     isActive: yup.boolean().optional(),
+    homeSection: yup.string().oneOf(['', 'hot_rights_available', 'profitable_picks', 'international_deals', 'indie_gems']).optional(),
   })
 
   const {
@@ -1175,6 +1197,7 @@ const MoviesAdd = () => {
       email: '',
       cast: [],
       crew: [],
+      homeSection: '',
     },
   })
 
@@ -1226,6 +1249,7 @@ const MoviesAdd = () => {
         },
         cast: (data.cast || []).map((c: any) => ({ name: c.name, type: c.type, image: c.image })),
         crew: (data.crew || []).map((c: any) => ({ name: c.name, designation: c.designation, image: c.image })),
+        homeSection: data.homeSection || '',
       }
 
       // ✅ send JSON object (not FormData)

@@ -44,6 +44,7 @@ const schema = yup.object().shape({
   availableSeats: yup.number().typeError('Enter valid number').required('Available seats required'),
   maxTicketsPerPerson: yup.number().typeError('Enter valid number').default(10),
   tagsInput: yup.string().required('Tags required'),
+  homeSection: yup.string().oneOf(['', 'trending_events', 'celebrity_events', 'exclusive_invite_only', 'near_you']).optional(),
 })
 
 type FormValues = yup.InferType<typeof schema> & {
@@ -53,6 +54,7 @@ type FormValues = yup.InferType<typeof schema> & {
   organizers?: string[]
   tags?: string[]
   seatTypes?: ISeatType[]
+  homeSection?: string
 }
 
 const EventsAdd = () => {
@@ -92,6 +94,7 @@ const EventsAdd = () => {
     defaultValues: {
       eventLanguage: 'English',
       maxTicketsPerPerson: 10,
+      homeSection: '',
     }
   })
 
@@ -248,6 +251,7 @@ const EventsAdd = () => {
           .map((t: string) => t.trim())
           .filter((t: string) => t.length > 0),
         isActive: true,
+        homeSection: values.homeSection || '',
       }
 
       setUploadProgress(90)
@@ -396,6 +400,19 @@ const EventsAdd = () => {
                     <option value="cancelled">Cancelled</option>
                   </select>
                   {errors.status && <small className="text-danger">{errors.status.message}</small>}
+                </Col>
+
+                {/* Home Section */}
+                <Col lg={6} className="mt-3">
+                  <label className="form-label">Home Page Section</label>
+                  <select {...register('homeSection')} className="form-select">
+                    <option value="">-- Not Featured on Home --</option>
+                    <option value="trending_events">Trending Events</option>
+                    <option value="celebrity_events">Celebrity Events</option>
+                    <option value="exclusive_invite_only">Exclusive / Invite Only</option>
+                    <option value="near_you">Near You</option>
+                  </select>
+                  <small className="text-muted">Select a section to feature this event on the home page</small>
                 </Col>
               </Row>
             </CardBody>
