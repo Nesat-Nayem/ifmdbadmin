@@ -49,6 +49,7 @@ type FormValues = {
   phone?: string
   email?: string
   homeSection?: '' | 'hot_rights_available' | 'profitable_picks' | 'international_deals' | 'indie_gems'
+  tradeStatus?: 'get_it_now' | 'sold_out' | 'out_of_stock' | 'coming_soon' | 'limited_offer' | 'negotiating'
 }
 
 const schema = yup.object({
@@ -82,6 +83,7 @@ const schema = yup.object({
   awards: yup.array(yup.string()).optional(),
   isActive: yup.boolean().optional(),
   homeSection: yup.string().oneOf(['', 'hot_rights_available', 'profitable_picks', 'international_deals', 'indie_gems']).optional(),
+  tradeStatus: yup.string().oneOf(['get_it_now', 'sold_out', 'out_of_stock', 'coming_soon', 'limited_offer', 'negotiating']).optional(),
 })
 
 const MoviesEditForm: React.FC<Props> = ({ id }) => {
@@ -244,6 +246,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       phone: '',
       email: '',
       homeSection: '',
+      tradeStatus: 'get_it_now',
     },
   })
 
@@ -285,6 +288,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
         awards: (movie as any).awards || [],
         isActive: (movie as any).isActive ?? true,
         homeSection: (movie as any).homeSection || '',
+        tradeStatus: (movie as any).tradeStatus || 'get_it_now',
         productionhouse: movie.company?.productionHouse || '',
         website: movie.company?.website || '',
         address: movie.company?.address || '',
@@ -361,6 +365,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       payload.cast = cast.map((c) => ({ name: c.name, type: c.type, image: c.image }))
       payload.crew = crew.map((c) => ({ name: c.name, designation: c.designation, image: c.image }))
       payload.homeSection = values.homeSection || ''
+      payload.tradeStatus = values.tradeStatus || 'get_it_now'
       // Include country pricing
       payload.countryPricing = countryPricing.filter((p) => p.countryCode).map((p) => ({
         countryCode: p.countryCode,
@@ -1131,6 +1136,28 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                     )}
                   />
                   <small className="text-muted">Select a section to feature this movie on the home page</small>
+                </div>
+              </Col>
+
+              {/* Trade Status */}
+              <Col lg={6}>
+                <div className="mb-3">
+                  <label className="form-label">Trade Status</label>
+                  <Controller
+                    control={control}
+                    name="tradeStatus"
+                    render={({ field }) => (
+                      <select {...field} className="form-control form-select">
+                        <option value="get_it_now">🟢 Get It Now</option>
+                        <option value="sold_out">🔴 Sold Out</option>
+                        <option value="out_of_stock">⚫ Out of Stock</option>
+                        <option value="coming_soon">🟡 Coming Soon</option>
+                        <option value="limited_offer">🟠 Limited Offer</option>
+                        <option value="negotiating">🔵 Negotiating</option>
+                      </select>
+                    )}
+                  />
+                  <small className="text-muted">Status badge shown on Film Trade cards</small>
                 </div>
               </Col>
             </Row>

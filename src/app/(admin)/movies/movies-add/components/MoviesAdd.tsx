@@ -877,6 +877,28 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue }: General
               </div>
             </Col>
 
+            {/* Trade Status */}
+            <Col lg={6}>
+              <div className="mb-3">
+                <label className="form-label">Trade Status</label>
+                <Controller
+                  control={control}
+                  name="tradeStatus"
+                  render={({ field }) => (
+                    <select {...field} className="form-control form-select">
+                      <option value="get_it_now">🟢 Get It Now</option>
+                      <option value="sold_out">🔴 Sold Out</option>
+                      <option value="out_of_stock">⚫ Out of Stock</option>
+                      <option value="coming_soon">🟡 Coming Soon</option>
+                      <option value="limited_offer">🟠 Limited Offer</option>
+                      <option value="negotiating">🔵 Negotiating</option>
+                    </select>
+                  )}
+                />
+                <small className="text-muted">Status badge shown on Film Trade cards</small>
+              </div>
+            </Col>
+
             {/* Description */}
             <Col lg={12}>
               <div className="mb-3">
@@ -1299,6 +1321,7 @@ const MoviesAdd = () => {
     uaCertification: yup.string().optional(),
     isActive: yup.boolean().optional(),
     homeSection: yup.string().oneOf(['', 'hot_rights_available', 'profitable_picks', 'international_deals', 'indie_gems']).optional(),
+    tradeStatus: yup.string().oneOf(['get_it_now', 'sold_out', 'out_of_stock', 'coming_soon', 'limited_offer', 'negotiating']).optional(),
   })
 
   const {
@@ -1348,6 +1371,7 @@ const MoviesAdd = () => {
       cast: [],
       crew: [],
       homeSection: '',
+      tradeStatus: 'get_it_now',
     },
   })
 
@@ -1400,6 +1424,7 @@ const MoviesAdd = () => {
         cast: (data.cast || []).map((c: any) => ({ name: c.name, type: c.type, image: c.image })),
         crew: (data.crew || []).map((c: any) => ({ name: c.name, designation: c.designation, image: c.image })),
         homeSection: data.homeSection || '',
+        tradeStatus: data.tradeStatus || 'get_it_now',
         countryPricing: (data.countryPricing || []).filter((p: any) => p.countryCode).map((p: any) => ({
           countryCode: p.countryCode,
           countryName: p.countryName,
