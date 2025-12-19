@@ -3,10 +3,20 @@
 import { useCreateVendorPackageMutation } from '@/store/vendorApi'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Button, Card, CardBody, CardHeader, CardTitle, Col, Container, Row, Toast, ToastContainer, Form } from 'react-bootstrap'
 import { useForm, Controller } from 'react-hook-form'
 import * as yup from 'yup'
+import { FaTrash } from 'react-icons/fa'
+import COUNTRIES, { ICountry } from '@/data/countries'
+
+interface ICountryPricing {
+  countryCode: string
+  countryName: string
+  currency: string
+  price: number
+  isActive: boolean
+}
 
 const schema = yup.object({
   name: yup.string().required('Package name is required'),
@@ -27,6 +37,49 @@ const VendorPackageAdd = () => {
   const [showToast, setShowToast] = useState(false)
   const [features, setFeatures] = useState<string[]>([])
   const [featureInput, setFeatureInput] = useState('')
+  const [countryPricing, setCountryPricing] = useState<ICountryPricing[]>([])
+  const [countrySearch, setCountrySearch] = useState('')
+
+  // Filter countries for search dropdown
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch) return []
+    const lowerSearch = countrySearch.toLowerCase()
+    return COUNTRIES.filter(
+      (c) =>
+        (c.name.toLowerCase().includes(lowerSearch) ||
+          c.code.toLowerCase().includes(lowerSearch) ||
+          c.currency.toLowerCase().includes(lowerSearch)) &&
+        !countryPricing.some((cp) => cp.countryCode === c.code)
+    )
+  }, [countrySearch, countryPricing])
+
+  // Add country pricing
+  const addCountryPricing = (country: ICountry) => {
+    if (countryPricing.some((cp) => cp.countryCode === country.code)) return
+    setCountryPricing([
+      ...countryPricing,
+      {
+        countryCode: country.code,
+        countryName: country.name,
+        currency: country.currency,
+        price: 0,
+        isActive: true,
+      },
+    ])
+    setCountrySearch('')
+  }
+
+  // Update country pricing
+  const updateCountryPricing = (index: number, field: keyof ICountryPricing, value: any) => {
+    const updated = [...countryPricing]
+    updated[index] = { ...updated[index], [field]: value }
+    setCountryPricing(updated)
+  }
+
+  // Remove country pricing
+  const removeCountryPricing = (index: number) => {
+    setCountryPricing(countryPricing.filter((_, i) => i !== index))
+  }
 
   const [createPackage, { isLoading }] = useCreateVendorPackageMutation()
   const router = useRouter()
@@ -69,6 +122,7 @@ const VendorPackageAdd = () => {
     const payload = {
       ...values,
       features,
+      countryPricing,
     }
 
     try {
@@ -149,6 +203,101 @@ const VendorPackageAdd = () => {
                   </div>
                 </Col>
               </Row>
+            </CardBody>
+          </Card>
+
+          {/* Country-wise Pricing Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle as="h4">🌍 Country-wise Pricing</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <p className="text-muted mb-3">Set different prices for different countries. If a country is not listed, the default price (above) will be used.</p>
+              
+              {/* Country Search Dropdown */}
+              <div className="mb-3 position-relative">
+                <Form.Control
+                  placeholder="Search country to add pricing..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                />
+                {countrySearch && (
+                  <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: 300, overflowY: 'auto' }}>
+                    {filteredCountries.length === 0 ? (
+                      <div className="p-3 text-muted text-center">No countries found</div>
+                    ) : (
+                      filteredCountries.slice(0, 20).map((country) => (
+                        <div
+                          key={country.code}
+                          className="p-2 d-flex align-items-center gap-2 border-bottom"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => addCountryPricing(country)}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <span style={{ fontSize: '1.5rem' }}>{country.flag}</span>
+                          <div>
+                            <strong>{country.name}</strong>
+                            <small className="text-muted d-block">{country.code} • {country.currency} ({country.currencySymbol})</small>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {filteredCountries.length > 20 && (
+                      <div className="p-2 text-muted text-center small">Type more to narrow down results...</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Country Pricing List */}
+              {countryPricing.length === 0 ? (
+                <div className="text-muted text-center py-3 border rounded bg-light">
+                  <small>No country pricing added. Search and add countries above.</small>
+                </div>
+              ) : (
+                countryPricing.map((cp, index) => {
+                  const countryData = COUNTRIES.find((c) => c.code === cp.countryCode)
+                  return (
+                    <Row key={index} className="mb-2 align-items-center py-2 border-bottom">
+                      <Col md={4}>
+                        <div className="d-flex align-items-center gap-2">
+                          <span style={{ fontSize: '1.3rem' }}>{countryData?.flag || '🏳️'}</span>
+                          <div>
+                            <strong>{cp.countryName}</strong>
+                            <small className="text-muted d-block">{cp.countryCode} • {cp.currency}</small>
+                          </div>
+                        </div>
+                      </Col>
+                      <Col md={3}>
+                        <div className="input-group input-group-sm">
+                          <span className="input-group-text">{countryData?.currencySymbol || cp.currency}</span>
+                          <Form.Control
+                            type="number"
+                            placeholder="Price"
+                            value={cp.price}
+                            onChange={(e) => updateCountryPricing(index, 'price', Number(e.target.value))}
+                            size="sm"
+                          />
+                        </div>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Check
+                          type="switch"
+                          label="Active"
+                          checked={cp.isActive}
+                          onChange={(e) => updateCountryPricing(index, 'isActive', e.target.checked)}
+                        />
+                      </Col>
+                      <Col md={2}>
+                        <Button size="sm" variant="outline-danger" onClick={() => removeCountryPricing(index)}>
+                          <FaTrash />
+                        </Button>
+                      </Col>
+                    </Row>
+                  )
+                })
+              )}
             </CardBody>
           </Card>
 

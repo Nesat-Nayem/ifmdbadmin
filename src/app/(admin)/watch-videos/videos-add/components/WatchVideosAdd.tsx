@@ -11,36 +11,8 @@ import { useCreateWatchVideoMutation, useGetWatchVideoCategoriesQuery, useGetCha
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
-// Country list with codes and currencies
-const COUNTRIES = [
-  { code: 'IN', name: 'India', currency: 'INR' },
-  { code: 'US', name: 'United States', currency: 'USD' },
-  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
-  { code: 'CA', name: 'Canada', currency: 'CAD' },
-  { code: 'AU', name: 'Australia', currency: 'AUD' },
-  { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
-  { code: 'SG', name: 'Singapore', currency: 'SGD' },
-  { code: 'DE', name: 'Germany', currency: 'EUR' },
-  { code: 'FR', name: 'France', currency: 'EUR' },
-  { code: 'JP', name: 'Japan', currency: 'JPY' },
-  { code: 'BD', name: 'Bangladesh', currency: 'BDT' },
-  { code: 'PK', name: 'Pakistan', currency: 'PKR' },
-  { code: 'LK', name: 'Sri Lanka', currency: 'LKR' },
-  { code: 'NP', name: 'Nepal', currency: 'NPR' },
-  { code: 'MY', name: 'Malaysia', currency: 'MYR' },
-  { code: 'ID', name: 'Indonesia', currency: 'IDR' },
-  { code: 'TH', name: 'Thailand', currency: 'THB' },
-  { code: 'PH', name: 'Philippines', currency: 'PHP' },
-  { code: 'SA', name: 'Saudi Arabia', currency: 'SAR' },
-  { code: 'QA', name: 'Qatar', currency: 'QAR' },
-  { code: 'KW', name: 'Kuwait', currency: 'KWD' },
-  { code: 'OM', name: 'Oman', currency: 'OMR' },
-  { code: 'BH', name: 'Bahrain', currency: 'BHD' },
-  { code: 'EG', name: 'Egypt', currency: 'EGP' },
-  { code: 'NG', name: 'Nigeria', currency: 'NGN' },
-  { code: 'KE', name: 'Kenya', currency: 'KES' },
-  { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
-]
+// Import comprehensive countries data
+import COUNTRIES, { ICountry } from '@/data/countries'
 
 // Validation schema
 const schema = yup.object().shape({
@@ -627,51 +599,81 @@ const WatchVideosAdd = () => {
                         onChange={(e) => setCountrySearch(e.target.value)}
                       />
                       {countrySearch && (
-                        <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: 200, overflowY: 'auto' }}>
-                          {filteredCountries.map(country => (
-                            <div
-                              key={country.code}
-                              className="p-2"
-                              style={{ cursor: 'pointer' }}
-                              onClick={() => addCountryPricing(country)}
-                            >
-                              <strong>{country.name}</strong> ({country.code}) - {country.currency}
-                            </div>
-                          ))}
+                        <div className="position-absolute w-100 bg-white border rounded shadow-sm" style={{ zIndex: 1000, maxHeight: 300, overflowY: 'auto' }}>
+                          {filteredCountries.length === 0 ? (
+                            <div className="p-3 text-muted text-center">No countries found</div>
+                          ) : (
+                            filteredCountries.slice(0, 20).map(country => (
+                              <div
+                                key={country.code}
+                                className="p-2 d-flex align-items-center gap-2 border-bottom"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => addCountryPricing(country)}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              >
+                                <span style={{ fontSize: '1.5rem' }}>{country.flag}</span>
+                                <div>
+                                  <strong>{country.name}</strong>
+                                  <small className="text-muted d-block">{country.code} • {country.currency} ({country.currencySymbol})</small>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                          {filteredCountries.length > 20 && (
+                            <div className="p-2 text-muted text-center small">Type more to narrow down results...</div>
+                          )}
                         </div>
                       )}
                     </div>
                     {/* Country Pricing List */}
-                    {countryPricing.map((cp, index) => (
-                      <Row key={index} className="mb-2 align-items-center">
-                        <Col md={3}>
-                          <span className="badge bg-secondary me-2">{cp.countryCode}</span>
-                          {cp.countryName}
-                        </Col>
-                        <Col md={3}>
-                          <Form.Control 
-                            type="number"
-                            placeholder="Price"
-                            value={cp.price}
-                            onChange={(e) => updateCountryPricing(index, 'price', Number(e.target.value))}
-                            size="sm"
-                          />
-                        </Col>
-                        <Col md={2}>
-                          <Form.Check 
-                            type="switch"
-                            label="Active"
-                            checked={cp.isActive}
-                            onChange={(e) => updateCountryPricing(index, 'isActive', e.target.checked)}
-                          />
-                        </Col>
-                        <Col md={2}>
-                          <Button size="sm" variant="outline-danger" onClick={() => removeCountryPricing(index)}>
-                            <FaTrash />
-                          </Button>
-                        </Col>
-                      </Row>
-                    ))}
+                    {countryPricing.length === 0 ? (
+                      <div className="text-muted text-center py-3 border rounded bg-light">
+                        <small>No country pricing added. Search and add countries above.</small>
+                      </div>
+                    ) : (
+                      countryPricing.map((cp, index) => {
+                        const countryData = COUNTRIES.find(c => c.code === cp.countryCode)
+                        return (
+                          <Row key={index} className="mb-2 align-items-center py-2 border-bottom">
+                            <Col md={4}>
+                              <div className="d-flex align-items-center gap-2">
+                                <span style={{ fontSize: '1.3rem' }}>{countryData?.flag || '🏳️'}</span>
+                                <div>
+                                  <strong>{cp.countryName}</strong>
+                                  <small className="text-muted d-block">{cp.countryCode} • {cp.currency}</small>
+                                </div>
+                              </div>
+                            </Col>
+                            <Col md={3}>
+                              <div className="input-group input-group-sm">
+                                <span className="input-group-text">{countryData?.currencySymbol || cp.currency}</span>
+                                <Form.Control 
+                                  type="number"
+                                  placeholder="Price"
+                                  value={cp.price}
+                                  onChange={(e) => updateCountryPricing(index, 'price', Number(e.target.value))}
+                                  size="sm"
+                                />
+                              </div>
+                            </Col>
+                            <Col md={3}>
+                              <Form.Check 
+                                type="switch"
+                                label="Active"
+                                checked={cp.isActive}
+                                onChange={(e) => updateCountryPricing(index, 'isActive', e.target.checked)}
+                              />
+                            </Col>
+                            <Col md={2}>
+                              <Button size="sm" variant="outline-danger" onClick={() => removeCountryPricing(index)}>
+                                <FaTrash />
+                              </Button>
+                            </Col>
+                          </Row>
+                        )
+                      })
+                    )}
                   </Col>
                 </Row>
               </Tab>
