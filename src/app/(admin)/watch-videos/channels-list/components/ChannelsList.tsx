@@ -63,14 +63,10 @@ const ChannelsList = () => {
         catch { bannerUrl = URL.createObjectURL(bannerFile) }
       }
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      
       await createChannel({
         ...newChannel,
         logoUrl,
         bannerUrl,
-        ownerId: user._id,
-        ownerType: user.role === 'admin' ? 'admin' : 'vendor',
       }).unwrap()
 
       setCreateModal(false)
@@ -87,6 +83,9 @@ const ChannelsList = () => {
       setShowToast(true)
     }
   }
+
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
+  const isAdmin = user?.role === 'admin'
 
   if (isLoading) {
     return (
@@ -255,7 +254,14 @@ const ChannelsList = () => {
               </Form.Group>
             </Col>
             <Col md={6}>
-              <Form.Check type="switch" label="Verified Channel" checked={newChannel.isVerified} onChange={(e) => setNewChannel({...newChannel, isVerified: e.target.checked})} />
+              {isAdmin ? (
+                <Form.Check
+                  type="switch"
+                  label="Verified Channel"
+                  checked={newChannel.isVerified}
+                  onChange={(e) => setNewChannel({ ...newChannel, isVerified: e.target.checked })}
+                />
+              ) : null}
             </Col>
             <Col md={6}>
               <Form.Check type="switch" label="Active" checked={newChannel.isActive} onChange={(e) => setNewChannel({...newChannel, isActive: e.target.checked})} />
