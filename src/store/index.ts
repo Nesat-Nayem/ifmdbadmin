@@ -21,6 +21,8 @@ import { uploadApi } from './uploadApi'
 import { eventCategoryApi } from './eventCategoryApi'
 import { vendorApi } from './vendorApi'
 import { watchVideosApi } from './watchVideosApi'
+import { walletApi } from './walletApi'
+import { profileApi } from './profileApi'
 
 export const store = configureStore({
   reducer: {
@@ -46,6 +48,8 @@ export const store = configureStore({
     [eventCategoryApi.reducerPath]: eventCategoryApi.reducer,
     [vendorApi.reducerPath]: vendorApi.reducer,
     [watchVideosApi.reducerPath]: watchVideosApi.reducer,
+    [walletApi.reducerPath]: walletApi.reducer,
+    [profileApi.reducerPath]: profileApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -72,6 +76,8 @@ export const store = configureStore({
       eventCategoryApi.middleware,
       vendorApi.middleware,
       watchVideosApi.middleware,
+      walletApi.middleware,
+      profileApi.middleware,
     ),
 })
 

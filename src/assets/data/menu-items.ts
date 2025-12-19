@@ -380,6 +380,62 @@ export const MENU_ITEMS: MenuItemType[] = [
     ],
   },
 
+  // ============ PROFILE & SETTINGS ============
+  {
+    key: 'profile-title',
+    label: 'ACCOUNT',
+    isTitle: true,
+  },
+  {
+    key: 'my-profile',
+    label: 'My Profile',
+    icon: 'solar:user-circle-bold-duotone',
+    url: '/profile',
+  },
+
+  // ============ WALLET (Vendors) ============
+  {
+    key: 'wallet-title',
+    label: 'WALLET',
+    isTitle: true,
+    allowedRoles: ['vendor'],
+  },
+  {
+    key: 'wallet',
+    label: 'Wallet',
+    icon: 'solar:wallet-bold-duotone',
+    allowedRoles: ['vendor'],
+    children: [
+      {
+        key: 'wallet-dashboard',
+        label: 'My Wallet',
+        url: '/wallet',
+        parentKey: 'wallet',
+      },
+      {
+        key: 'wallet-withdrawals',
+        label: 'Withdrawal History',
+        url: '/wallet/withdrawals',
+        parentKey: 'wallet',
+      },
+    ],
+  },
+
+  // ============ ADMIN WALLET (Admin Only) ============
+  {
+    key: 'admin-wallet-title',
+    label: 'PLATFORM EARNINGS',
+    isTitle: true,
+    allowedRoles: ['admin'],
+  },
+  {
+    key: 'admin-wallet',
+    label: 'Platform Earnings',
+    icon: 'solar:wallet-money-bold-duotone',
+    url: '/admin-wallet',
+    allowedRoles: ['admin'],
+  },
+
   // ============ ENQUIRES (Everyone) ============
   {
     key: 'enquires',
