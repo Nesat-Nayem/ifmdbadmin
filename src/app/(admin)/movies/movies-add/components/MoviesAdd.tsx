@@ -8,15 +8,20 @@ import { useRouter } from 'next/navigation'
 import { useCreateMovieMutation } from '@/store/moviesApi'
 import { useGetMovieCategoriesQuery } from '@/store/movieCategory'
 import { useUploadSingleMutation } from '@/store/uploadApi'
+import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 type GeneralInformationCardProps = {
   control: Control<any>
   setImage: React.Dispatch<React.SetStateAction<File | null>>
   errors: any
   setValue: UseFormSetValue<any>
+  trailerUrl: string
+  setTrailerUrl: React.Dispatch<React.SetStateAction<string>>
+  cloudflareTrailerUid: string
+  setCloudflareTrailerUid: React.Dispatch<React.SetStateAction<string>>
 }
 
-const GeneralInformationCard = ({ control, setImage, errors, setValue }: GeneralInformationCardProps) => {
+const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUrl, setTrailerUrl, cloudflareTrailerUid, setCloudflareTrailerUid }: GeneralInformationCardProps) => {
   // cast
   const [cast, setcast] = useState([{ name: '', type: '', image: null }])
   const [uploadSingle, { isLoading: isPosterUploading }] = useUploadSingleMutation()
@@ -222,16 +227,28 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue }: General
               </div>
             </Col>
 
-            {/* Trailer */}
-            <Col lg={6}>
-              <div className="mb-3">
-                <label className="form-label">Trailer URL</label>
-                <Controller
-                  control={control}
-                  name="trailerUrl"
-                  render={({ field }) => <input {...field} type="url" className="form-control" placeholder='e.g. "https://www.youtube.com' />}
-                />
-              </div>
+            {/* Trailer Upload */}
+            <Col lg={12}>
+              <Card className="border-2 border-dashed">
+                <CardBody>
+                  <h6 className="mb-3">🎬 Trailer Upload (Cloudflare Stream)</h6>
+                  {trailerUrl && (
+                    <div className="mb-3 p-2 bg-light rounded">
+                      <small className="text-success">✅ Current trailer: {trailerUrl.substring(0, 60)}...</small>
+                    </div>
+                  )}
+                  <CloudflareVideoUploader
+                    onUploadComplete={(uid: string, url: string) => {
+                      setTrailerUrl(url)
+                      setCloudflareTrailerUid(uid)
+                      setValue('trailerUrl', url, { shouldValidate: true })
+                      setValue('cloudflareTrailerUid', uid, { shouldValidate: true })
+                    }}
+                    uploadType="trailer"
+                    existingUid={cloudflareTrailerUid}
+                  />
+                </CardBody>
+              </Card>
             </Col>
 
             {/* Gallery Images */}
@@ -1281,6 +1298,8 @@ const MoviesAdd = () => {
   const [showToast, setShowToast] = useState(false)
 
   const [image, setImage] = React.useState<File | null>(null)
+  const [trailerUrl, setTrailerUrl] = useState('')
+  const [cloudflareTrailerUid, setCloudflareTrailerUid] = useState('')
   const router = useRouter()
 
   const [createMovies, { isLoading }] = useCreateMovieMutation()
@@ -1398,7 +1417,8 @@ const MoviesAdd = () => {
         rottenTomatoesRating: data.rottenTomatoesRating,
         posterUrl: data.posterUrl,
         backdropUrl: data.backdropUrl,
-        trailerUrl: data.trailerUrl,
+        trailerUrl: trailerUrl || data.trailerUrl,
+        cloudflareTrailerUid: cloudflareTrailerUid,
         galleryImages: data.galleryImages,
         budget: data.budget,
         boxOffice: data.boxOffice,
@@ -1451,7 +1471,16 @@ const MoviesAdd = () => {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <GeneralInformationCard control={control} setImage={setImage} errors={errors} setValue={setValue} />
+        <GeneralInformationCard 
+          control={control} 
+          setImage={setImage} 
+          errors={errors} 
+          setValue={setValue}
+          trailerUrl={trailerUrl}
+          setTrailerUrl={setTrailerUrl}
+          cloudflareTrailerUid={cloudflareTrailerUid}
+          setCloudflareTrailerUid={setCloudflareTrailerUid}
+        />
 
         <div className="p-3 bg-light mb-3 rounded">
           <Row className="justify-content-end g-2">

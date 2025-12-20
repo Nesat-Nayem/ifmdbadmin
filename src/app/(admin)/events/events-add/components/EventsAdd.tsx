@@ -11,6 +11,7 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
+import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 // Seat Type Interface
 interface ISeatType {
@@ -60,6 +61,8 @@ type FormValues = yup.InferType<typeof schema> & {
 const EventsAdd = () => {
   const [poster, setPoster] = useState<File | null>(null)
   const [galleryImages, setGalleryImages] = useState<File[]>([])
+  const [videoUrl, setVideoUrl] = useState('')
+  const [cloudflareVideoUid, setCloudflareVideoUid] = useState('')
   const router = useRouter()
 
   // Toast state
@@ -232,6 +235,8 @@ const EventsAdd = () => {
           longitude: values.longitude || 0,
         },
         posterImage: posterImageUrl,
+        videoUrl: videoUrl,
+        cloudflareVideoUid: cloudflareVideoUid,
         galleryImages: galleryImageUrls,
         seatTypes: validSeatTypes,
         performers: performers.filter(p => p.name.trim() !== '').map((p) => ({
@@ -263,6 +268,8 @@ const EventsAdd = () => {
       reset()
       setPoster(null)
       setGalleryImages([])
+      setVideoUrl('')
+      setCloudflareVideoUid('')
       setSeatTypes([{ name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }])
       
       setTimeout(() => {
@@ -302,11 +309,26 @@ const EventsAdd = () => {
                   <input type="file" className="form-control" accept="image/*" onChange={(e) => setPoster(e.target.files?.[0] || null)} required />
                 </Col>
 
-                {/* Video Url */}
-                <Col lg={6} className="mt-3">
-                  <label className="form-label">Video URL *</label>
-                  <input type="url" {...register('title')} className="form-control" />
-                  {errors.title && <small className="text-danger">{errors.title.message}</small>}
+                {/* Event Video Upload */}
+                <Col lg={12} className="mt-3">
+                  <Card className="border-2 border-dashed">
+                    <CardBody>
+                      <h6 className="mb-3">🎬 Event Video Upload (Cloudflare Stream)</h6>
+                      {videoUrl && (
+                        <div className="mb-3 p-2 bg-light rounded">
+                          <small className="text-success">✅ Current video: {videoUrl.substring(0, 60)}...</small>
+                        </div>
+                      )}
+                      <CloudflareVideoUploader
+                        onUploadComplete={(uid: string, url: string) => {
+                          setVideoUrl(url)
+                          setCloudflareVideoUid(uid)
+                        }}
+                        uploadType="trailer"
+                        existingUid={cloudflareVideoUid}
+                      />
+                    </CardBody>
+                  </Card>
                 </Col>
 
                 <Col lg={12} className="mt-3">
