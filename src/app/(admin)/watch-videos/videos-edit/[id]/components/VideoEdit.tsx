@@ -613,6 +613,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                             setCloudflareVideoUid(uid)
                           }}
                           uploadType="main"
+                          videoType={videoType as any}
                           existingUid={cloudflareVideoUid}
                         />
                       </CardBody>
@@ -635,6 +636,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                             setCloudflareTrailerUid(uid)
                           }}
                           uploadType="trailer"
+                          videoType={videoType as any}
                           existingUid={cloudflareTrailerUid}
                         />
                       </CardBody>

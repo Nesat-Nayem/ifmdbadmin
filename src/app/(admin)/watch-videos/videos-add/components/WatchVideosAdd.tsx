@@ -500,6 +500,7 @@ const WatchVideosAdd = () => {
                             setCloudflareVideoUid(uid)
                           }}
                           uploadType="main"
+                          videoType={videoType as any}
                           existingUid={cloudflareVideoUid}
                         />
                         {videoUrl && (
@@ -522,6 +523,7 @@ const WatchVideosAdd = () => {
                             setCloudflareTrailerUid(uid)
                           }}
                           uploadType="trailer"
+                          videoType={videoType as any}
                           existingUid={cloudflareTrailerUid}
                         />
                         {trailerUrl && (

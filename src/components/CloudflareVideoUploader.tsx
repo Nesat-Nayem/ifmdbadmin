@@ -9,6 +9,7 @@ import * as tus from 'tus-js-client'
 interface CloudflareVideoUploaderProps {
   onUploadComplete: (uid: string, embedUrl: string) => void
   uploadType?: 'main' | 'trailer'
+  videoType?: 'single' | 'series'
   existingUid?: string
   maxDurationSeconds?: number
 }
@@ -18,6 +19,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v
 const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
   onUploadComplete,
   uploadType = 'main',
+  videoType = 'single',
   existingUid,
   maxDurationSeconds = 7200, // 2 hours default
 }) => {
@@ -104,6 +106,12 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
     return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
   }
 
+  const getMaxAllowedBytes = () => {
+    if (uploadType === 'trailer') return 100 * 1024 * 1024
+    if (videoType === 'series') return 500 * 1024 * 1024
+    return 2 * 1024 * 1024 * 1024
+  }
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
@@ -122,6 +130,12 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
     // Max file size: 30GB
     if (selectedFile.size > 30 * 1024 * 1024 * 1024) {
       setErrorMessage('File too large. Maximum size is 30GB.')
+      return
+    }
+
+    const maxAllowedBytes = getMaxAllowedBytes()
+    if (selectedFile.size > maxAllowedBytes) {
+      setErrorMessage(`File too large (${formatBytes(selectedFile.size)}). Maximum allowed size is ${formatBytes(maxAllowedBytes)}.`)
       return
     }
 
@@ -177,14 +191,84 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
         // Use Basic Direct Upload (simpler, no TUS, no chunk size issues)
         await uploadBasic(token)
       } else {
-        // For files over 200MB, show error for now
-        // TODO: Implement proper TUS proxy for large files
-        setUploadStatus('error')
-        setErrorMessage(`File too large for direct upload (${formatBytes(file.size)}). Maximum size is 200MB. Please compress your video or contact support for large file uploads.`)
+        await uploadTus(token)
       }
     } catch (error: any) {
       setUploadStatus('error')
       setErrorMessage(error.message || 'Failed to start upload')
+    }
+  }
+
+  const uploadTus = async (token: string) => {
+    try {
+      const urlResponse = await fetch(`${API_BASE_URL}/cloudflare-stream/tus-upload-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          maxDurationSeconds,
+          fileName: file?.name || 'video',
+          fileSize: file?.size,
+          uploadType,
+          videoType,
+        }),
+      })
+
+      if (!urlResponse.ok) {
+        const errorData = await urlResponse.json().catch(() => null)
+        throw new Error(errorData?.message || 'Failed to get TUS upload URL')
+      }
+
+      const urlData = await urlResponse.json()
+      const uploadUrl = urlData.data?.uploadUrl
+      const uid = urlData.data?.uid
+
+      if (!uploadUrl || !uid) {
+        throw new Error('No upload URL received from server')
+      }
+
+      setVideoUid(uid)
+
+      const tusUpload = new tus.Upload(file as File, {
+        uploadUrl,
+        chunkSize: 50 * 1024 * 1024,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        onError: (error: any) => {
+          console.error('TUS upload error:', error)
+          setUploadStatus('error')
+          setErrorMessage(error?.message || 'Upload failed')
+        },
+        onProgress: (bytesUploaded: number, bytesTotal: number) => {
+          const percentage = Math.round((bytesUploaded / bytesTotal) * 100)
+          setUploadProgress(percentage)
+
+          const now = Date.now()
+          const timeDiff = (now - lastProgress.current.time) / 1000
+          const bytesDiff = bytesUploaded - lastProgress.current.bytes
+
+          if (timeDiff > 0.5) {
+            const speed = bytesDiff / timeDiff
+            setUploadSpeed(`${formatBytes(speed)}/s`)
+
+            const remaining = (bytesTotal - bytesUploaded) / (speed || 1)
+            setTimeRemaining(formatTime(remaining))
+
+            lastProgress.current = { time: now, bytes: bytesUploaded }
+          }
+        },
+        onSuccess: () => {
+          setUploadStatus('processing')
+          setUploadProgress(100)
+        },
+      })
+
+      uploadRef.current = tusUpload
+      tusUpload.start()
+    } catch (error: any) {
+      console.error('TUS upload error:', error)
+      throw error
     }
   }
 
@@ -200,6 +284,10 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
         },
         body: JSON.stringify({
           maxDurationSeconds,
+          fileName: file?.name || 'video',
+          fileSize: file?.size,
+          uploadType,
+          videoType,
         }),
       })
 
@@ -286,7 +374,7 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
 
   const cancelUpload = () => {
     if (uploadRef.current) {
-      uploadRef.current.abort()
+      ;(uploadRef.current as any).abort?.()
     }
     setUploadStatus('idle')
     setUploadProgress(0)
