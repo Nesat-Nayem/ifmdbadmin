@@ -431,7 +431,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
       }
 
       console.log('Updating video with data:', updateData)
-      await updateVideo({ id: videoId, ...updateData }).unwrap()
+      await updateVideo({ id: videoId, data: updateData }).unwrap()
 
       setToastMessage('Video updated successfully!')
       setToastVariant('success')
