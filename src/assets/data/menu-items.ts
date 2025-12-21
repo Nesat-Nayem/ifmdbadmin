@@ -62,6 +62,13 @@ export const MENU_ITEMS: MenuItemType[] = [
     url: '/home-banner',
     allowedRoles: ['admin'],
   },
+  {
+    key: 'section-settings',
+    label: 'Section Settings',
+    icon: 'solar:palette-bold-duotone',
+    url: '/section-settings',
+    allowedRoles: ['admin'],
+  },
 
   // ============ BOOKINGS (Role + Service based) ============
   {
