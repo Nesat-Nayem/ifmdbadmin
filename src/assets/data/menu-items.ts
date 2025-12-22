@@ -496,6 +496,38 @@ export const MENU_ITEMS: MenuItemType[] = [
     parentKey: 'support',
     allowedRoles: ['admin'],
   },
+  {
+    key: 'cancellation-refund',
+    label: 'Cancellation & Refund',
+    icon: 'solar:document-text-bold-duotone',
+    url: '/support/cancellation-refund',
+    parentKey: 'support',
+    allowedRoles: ['admin'],
+  },
+  {
+    key: 'partner-terms',
+    label: 'Partner Terms & Conditions',
+    icon: 'solar:document-text-bold-duotone',
+    url: '/support/partner-terms',
+    parentKey: 'support',
+    allowedRoles: ['admin'],
+  },
+  {
+    key: 'about-us',
+    label: 'About Us',
+    icon: 'solar:document-text-bold-duotone',
+    url: '/support/about-us',
+    parentKey: 'support',
+    allowedRoles: ['admin'],
+  },
+  {
+    key: 'contact-us',
+    label: 'Contact Us',
+    icon: 'solar:document-text-bold-duotone',
+    url: '/support/contact-us-content',
+    parentKey: 'support',
+    allowedRoles: ['admin'],
+  },
 
   {
     key: 'settings-title',
