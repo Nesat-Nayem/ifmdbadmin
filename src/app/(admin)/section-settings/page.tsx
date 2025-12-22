@@ -394,7 +394,7 @@ const SectionSettingsPage = () => {
             <Tab eventKey="dividers" title={`Section Dividers (${dividers.length})`}>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <p className="text-muted mb-0">
-                  Section dividers are the major category headers (e.g., "Trade Movies", "Live Events")
+                  Section dividers are the major category headers (e.g., &quot;Trade Movies&quot;, &quot;Live Events&quot;)
                 </p>
                 <Button variant="primary" size="sm" onClick={() => openDividerModal()}>
                   + Add Divider
@@ -402,7 +402,7 @@ const SectionSettingsPage = () => {
               </div>
 
               {dividers.length === 0 ? (
-                <Alert variant="warning">No section dividers found. Click "Seed Defaults" to create default sections.</Alert>
+                <Alert variant="warning">No section dividers found. Click &quot;Seed Defaults&quot; to create default sections.</Alert>
               ) : (
                 <Accordion>
                   {dividers.map((divider, index) => (
@@ -450,7 +450,7 @@ const SectionSettingsPage = () => {
             <Tab eventKey="titles" title={`Section Titles (${titles.length})`}>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <p className="text-muted mb-0">
-                  Section titles are individual content section headers (e.g., "Trending Events", "New Release")
+                  Section titles are individual content section headers (e.g., &quot;Trending Events&quot;, &quot;New Release&quot;)
                 </p>
                 <Button variant="primary" size="sm" onClick={() => openTitleModal()}>
                   + Add Title
@@ -458,7 +458,7 @@ const SectionSettingsPage = () => {
               </div>
 
               {titles.length === 0 ? (
-                <Alert variant="warning">No section titles found. Click "Seed Defaults" to create default sections.</Alert>
+                <Alert variant="warning">No section titles found. Click &quot;Seed Defaults&quot; to create default sections.</Alert>
               ) : (
                 <>
                   {dividers.map(divider => {
