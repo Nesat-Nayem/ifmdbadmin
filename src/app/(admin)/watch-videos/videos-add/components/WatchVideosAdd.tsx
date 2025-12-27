@@ -53,6 +53,24 @@ interface ICrew {
   image: string
 }
 
+interface ISubtitle {
+  language: string
+  languageCode: string
+  label: string
+  url: string
+  isDefault: boolean
+  isActive: boolean
+}
+
+interface IAudioTrack {
+  language: string
+  languageCode: string
+  label: string
+  url: string
+  isDefault: boolean
+  isActive: boolean
+}
+
 interface IEpisode {
   episodeNumber: number
   title: string
@@ -93,6 +111,10 @@ const WatchVideosAdd = () => {
   const [crew, setCrew] = useState<ICrew[]>([])
   const [seasons, setSeasons] = useState<ISeason[]>([])
   const [countrySearch, setCountrySearch] = useState('')
+  const [subtitles, setSubtitles] = useState<ISubtitle[]>([])
+  const [audioTracks, setAudioTracks] = useState<IAudioTrack[]>([])
+  const [defaultSubtitleLanguage, setDefaultSubtitleLanguage] = useState('')
+  const [defaultAudioLanguage, setDefaultAudioLanguage] = useState('en')
   
   // Media states
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
@@ -249,6 +271,80 @@ const WatchVideosAdd = () => {
     }
   }
 
+  // Subtitle handlers
+  const addSubtitle = () => {
+    setSubtitles([...subtitles, { 
+      language: '', 
+      languageCode: '', 
+      label: '', 
+      url: '', 
+      isDefault: subtitles.length === 0,
+      isActive: true 
+    }])
+  }
+
+  const removeSubtitle = (index: number) => {
+    setSubtitles(subtitles.filter((_, i) => i !== index))
+  }
+
+  const updateSubtitle = (index: number, field: keyof ISubtitle, value: any) => {
+    const updated = [...subtitles]
+    updated[index] = { ...updated[index], [field]: value }
+    // If setting as default, unset other defaults
+    if (field === 'isDefault' && value === true) {
+      updated.forEach((sub, i) => {
+        if (i !== index) sub.isDefault = false
+      })
+    }
+    setSubtitles(updated)
+  }
+
+  const handleSubtitleFileUpload = async (index: number, file: File) => {
+    try {
+      const url = await uploadSingle(file).unwrap()
+      updateSubtitle(index, 'url', url)
+    } catch (error) {
+      console.error('Failed to upload subtitle file:', error)
+    }
+  }
+
+  // Audio Track handlers
+  const addAudioTrack = () => {
+    setAudioTracks([...audioTracks, { 
+      language: '', 
+      languageCode: '', 
+      label: '', 
+      url: '', 
+      isDefault: audioTracks.length === 0,
+      isActive: true 
+    }])
+  }
+
+  const removeAudioTrack = (index: number) => {
+    setAudioTracks(audioTracks.filter((_, i) => i !== index))
+  }
+
+  const updateAudioTrack = (index: number, field: keyof IAudioTrack, value: any) => {
+    const updated = [...audioTracks]
+    updated[index] = { ...updated[index], [field]: value }
+    // If setting as default, unset other defaults
+    if (field === 'isDefault' && value === true) {
+      updated.forEach((track, i) => {
+        if (i !== index) track.isDefault = false
+      })
+    }
+    setAudioTracks(updated)
+  }
+
+  const handleAudioTrackFileUpload = async (index: number, file: File) => {
+    try {
+      const url = await uploadSingle(file).unwrap()
+      updateAudioTrack(index, 'url', url)
+    } catch (error) {
+      console.error('Failed to upload audio track file:', error)
+    }
+  }
+
   // Season/Episode handlers
   const addSeason = () => {
     setSeasons([...seasons, {
@@ -340,6 +436,10 @@ const WatchVideosAdd = () => {
         posterUrl: posterUrl || '/assets/images/placeholder.png',
         videoUrl,
         trailerUrl,
+        subtitles: subtitles.filter(s => s.url && s.language),
+        audioTracks: audioTracks.filter(a => a.url && a.language),
+        defaultSubtitleLanguage,
+        defaultAudioLanguage,
         uploadedBy: user._id,
         uploadedByType: user.role === 'admin' ? 'admin' as const : 'vendor' as const,
         homeSection: values.homeSection || '',
@@ -564,6 +664,249 @@ const WatchVideosAdd = () => {
                           <img src={URL.createObjectURL(posterFile)} alt="Poster preview" className="img-thumbnail" style={{ maxHeight: 100 }} />
                         </div>
                       )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Tab>
+
+              {/* Subtitles & Audio Tab */}
+              <Tab eventKey="subtitles" title="🌐 Languages & Subtitles">
+                <Row className="g-3">
+                  {/* Subtitles Section */}
+                  <Col md={12}>
+                    <Card className="border-primary mb-4">
+                      <CardHeader className="bg-primary bg-opacity-10">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <h6 className="mb-0">📝 Subtitles / Captions</h6>
+                          <Button size="sm" variant="outline-primary" onClick={addSubtitle}>
+                            <FaPlus className="me-1" /> Add Subtitle
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardBody>
+                        {subtitles.length === 0 ? (
+                          <div className="text-muted text-center py-4 bg-light rounded">
+                            <p className="mb-2">No subtitles added yet</p>
+                            <small>Add subtitles in VTT, SRT, or ASS format for multi-language support</small>
+                          </div>
+                        ) : (
+                          subtitles.map((sub, index) => (
+                            <Row key={index} className="mb-3 pb-3 border-bottom align-items-end">
+                              <Col md={2}>
+                                <Form.Group>
+                                  <Form.Label className="small">Language</Form.Label>
+                                  <Form.Select 
+                                    size="sm"
+                                    value={sub.language}
+                                    onChange={(e) => {
+                                      const lang = e.target.value
+                                      const code = lang.toLowerCase().substring(0, 2)
+                                      updateSubtitle(index, 'language', lang)
+                                      updateSubtitle(index, 'languageCode', code)
+                                      updateSubtitle(index, 'label', lang)
+                                    }}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="English">English</option>
+                                    <option value="Hindi">Hindi</option>
+                                    <option value="Tamil">Tamil</option>
+                                    <option value="Telugu">Telugu</option>
+                                    <option value="Malayalam">Malayalam</option>
+                                    <option value="Kannada">Kannada</option>
+                                    <option value="Bengali">Bengali</option>
+                                    <option value="Marathi">Marathi</option>
+                                    <option value="Gujarati">Gujarati</option>
+                                    <option value="Punjabi">Punjabi</option>
+                                    <option value="Spanish">Spanish</option>
+                                    <option value="French">French</option>
+                                    <option value="German">German</option>
+                                    <option value="Arabic">Arabic</option>
+                                    <option value="Chinese">Chinese</option>
+                                    <option value="Japanese">Japanese</option>
+                                    <option value="Korean">Korean</option>
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                              <Col md={2}>
+                                <Form.Group>
+                                  <Form.Label className="small">Label</Form.Label>
+                                  <Form.Control 
+                                    size="sm"
+                                    placeholder="e.g., English CC"
+                                    value={sub.label}
+                                    onChange={(e) => updateSubtitle(index, 'label', e.target.value)}
+                                  />
+                                </Form.Group>
+                              </Col>
+                              <Col md={4}>
+                                <Form.Group>
+                                  <Form.Label className="small">Subtitle File (VTT/SRT)</Form.Label>
+                                  <Form.Control 
+                                    type="file"
+                                    size="sm"
+                                    accept=".vtt,.srt,.ass"
+                                    onChange={(e: any) => {
+                                      const file = e.target.files?.[0]
+                                      if (file) handleSubtitleFileUpload(index, file)
+                                    }}
+                                  />
+                                  {sub.url && <small className="text-success">✅ Uploaded</small>}
+                                </Form.Group>
+                              </Col>
+                              <Col md={2}>
+                                <Form.Check 
+                                  type="switch"
+                                  label="Default"
+                                  checked={sub.isDefault}
+                                  onChange={(e) => updateSubtitle(index, 'isDefault', e.target.checked)}
+                                />
+                              </Col>
+                              <Col md={2} className="d-flex gap-2">
+                                <Form.Check 
+                                  type="switch"
+                                  label="Active"
+                                  checked={sub.isActive}
+                                  onChange={(e) => updateSubtitle(index, 'isActive', e.target.checked)}
+                                />
+                                <Button size="sm" variant="outline-danger" onClick={() => removeSubtitle(index)}>
+                                  <FaTrash />
+                                </Button>
+                              </Col>
+                            </Row>
+                          ))
+                        )}
+                      </CardBody>
+                    </Card>
+                  </Col>
+
+                  {/* Audio Tracks Section */}
+                  <Col md={12}>
+                    <Card className="border-info">
+                      <CardHeader className="bg-info bg-opacity-10">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <h6 className="mb-0">🔊 Audio Tracks / Dubbed Versions</h6>
+                          <Button size="sm" variant="outline-info" onClick={addAudioTrack}>
+                            <FaPlus className="me-1" /> Add Audio Track
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardBody>
+                        {audioTracks.length === 0 ? (
+                          <div className="text-muted text-center py-4 bg-light rounded">
+                            <p className="mb-2">No additional audio tracks added</p>
+                            <small>Add dubbed audio tracks for multi-language audio support</small>
+                          </div>
+                        ) : (
+                          audioTracks.map((track, index) => (
+                            <Row key={index} className="mb-3 pb-3 border-bottom align-items-end">
+                              <Col md={2}>
+                                <Form.Group>
+                                  <Form.Label className="small">Language</Form.Label>
+                                  <Form.Select 
+                                    size="sm"
+                                    value={track.language}
+                                    onChange={(e) => {
+                                      const lang = e.target.value
+                                      const code = lang.toLowerCase().substring(0, 2)
+                                      updateAudioTrack(index, 'language', lang)
+                                      updateAudioTrack(index, 'languageCode', code)
+                                      updateAudioTrack(index, 'label', `${lang} Audio`)
+                                    }}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="English">English</option>
+                                    <option value="Hindi">Hindi</option>
+                                    <option value="Tamil">Tamil</option>
+                                    <option value="Telugu">Telugu</option>
+                                    <option value="Malayalam">Malayalam</option>
+                                    <option value="Kannada">Kannada</option>
+                                    <option value="Bengali">Bengali</option>
+                                    <option value="Marathi">Marathi</option>
+                                    <option value="Gujarati">Gujarati</option>
+                                    <option value="Punjabi">Punjabi</option>
+                                    <option value="Spanish">Spanish</option>
+                                    <option value="French">French</option>
+                                    <option value="German">German</option>
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                              <Col md={2}>
+                                <Form.Group>
+                                  <Form.Label className="small">Label</Form.Label>
+                                  <Form.Control 
+                                    size="sm"
+                                    placeholder="e.g., Hindi Dubbed"
+                                    value={track.label}
+                                    onChange={(e) => updateAudioTrack(index, 'label', e.target.value)}
+                                  />
+                                </Form.Group>
+                              </Col>
+                              <Col md={4}>
+                                <Form.Group>
+                                  <Form.Label className="small">Audio File URL</Form.Label>
+                                  <Form.Control 
+                                    size="sm"
+                                    placeholder="Enter audio track URL"
+                                    value={track.url}
+                                    onChange={(e) => updateAudioTrack(index, 'url', e.target.value)}
+                                  />
+                                </Form.Group>
+                              </Col>
+                              <Col md={2}>
+                                <Form.Check 
+                                  type="switch"
+                                  label="Default"
+                                  checked={track.isDefault}
+                                  onChange={(e) => updateAudioTrack(index, 'isDefault', e.target.checked)}
+                                />
+                              </Col>
+                              <Col md={2} className="d-flex gap-2">
+                                <Form.Check 
+                                  type="switch"
+                                  label="Active"
+                                  checked={track.isActive}
+                                  onChange={(e) => updateAudioTrack(index, 'isActive', e.target.checked)}
+                                />
+                                <Button size="sm" variant="outline-danger" onClick={() => removeAudioTrack(index)}>
+                                  <FaTrash />
+                                </Button>
+                              </Col>
+                            </Row>
+                          ))
+                        )}
+                      </CardBody>
+                    </Card>
+                  </Col>
+
+                  {/* Default Language Settings */}
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Default Subtitle Language</Form.Label>
+                      <Form.Select 
+                        value={defaultSubtitleLanguage}
+                        onChange={(e) => setDefaultSubtitleLanguage(e.target.value)}
+                      >
+                        <option value="">None (Subtitles Off)</option>
+                        {subtitles.filter(s => s.language).map((sub, i) => (
+                          <option key={i} value={sub.languageCode}>{sub.language}</option>
+                        ))}
+                      </Form.Select>
+                      <Form.Text className="text-muted">This subtitle will be shown by default</Form.Text>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Default Audio Language</Form.Label>
+                      <Form.Select 
+                        value={defaultAudioLanguage}
+                        onChange={(e) => setDefaultAudioLanguage(e.target.value)}
+                      >
+                        <option value="en">English (Original)</option>
+                        {audioTracks.filter(a => a.language).map((track, i) => (
+                          <option key={i} value={track.languageCode}>{track.language}</option>
+                        ))}
+                      </Form.Select>
+                      <Form.Text className="text-muted">This audio track will play by default</Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>
