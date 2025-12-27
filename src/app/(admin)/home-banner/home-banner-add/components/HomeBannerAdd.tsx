@@ -36,7 +36,7 @@ const GeneralInformationCard = ({ control, setImage }: GeneralInformationCardPro
           {/* Banner Image */}
           <Col lg={6}>
             <div className="mb-3">
-              <label className="form-label">Banner</label>
+              <label className="form-label">Banner Image Size (256px * 62px)</label>
               <input type="file" className="form-control" onChange={(e) => setImage(e.target.files?.[0] || null)} />
             </div>
           </Col>
