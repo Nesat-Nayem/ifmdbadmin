@@ -116,6 +116,12 @@ const WatchVideosAdd = () => {
   const [defaultSubtitleLanguage, setDefaultSubtitleLanguage] = useState('')
   const [defaultAudioLanguage, setDefaultAudioLanguage] = useState('en')
   
+  // Visibility Schedule states
+  const [isScheduled, setIsScheduled] = useState(false)
+  const [visibleFrom, setVisibleFrom] = useState('')
+  const [visibleUntil, setVisibleUntil] = useState('')
+  const [autoDeleteOnExpiry, setAutoDeleteOnExpiry] = useState(false)
+  
   // Media states
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [posterFile, setPosterFile] = useState<File | null>(null)
@@ -443,6 +449,11 @@ const WatchVideosAdd = () => {
         uploadedBy: user._id,
         uploadedByType: user.role === 'admin' ? 'admin' as const : 'vendor' as const,
         homeSection: values.homeSection || '',
+        // Visibility Schedule
+        isScheduled,
+        visibleFrom: isScheduled && visibleFrom ? new Date(visibleFrom).toISOString() : null,
+        visibleUntil: isScheduled && visibleUntil ? new Date(visibleUntil).toISOString() : null,
+        autoDeleteOnExpiry: isScheduled ? autoDeleteOnExpiry : false,
       }
 
       await createVideo(videoData).unwrap()
@@ -582,6 +593,88 @@ const WatchVideosAdd = () => {
                       </Form.Select>
                       <Form.Text className="text-muted">Select a section to feature this video on the home page</Form.Text>
                     </Form.Group>
+                  </Col>
+
+                  {/* Visibility Schedule Section */}
+                  <Col md={12} className="mt-4">
+                    <Card className="border-warning">
+                      <CardHeader className="bg-warning bg-opacity-10">
+                        <div className="d-flex align-items-center justify-content-between">
+                          <div>
+                            <h6 className="mb-0">📅 Visibility Schedule (Time-Limited Content)</h6>
+                            <small className="text-muted">Set when this video should be visible and when it expires</small>
+                          </div>
+                          <Form.Check 
+                            type="switch"
+                            id="schedule-toggle"
+                            label="Enable Schedule"
+                            checked={isScheduled}
+                            onChange={(e) => setIsScheduled(e.target.checked)}
+                          />
+                        </div>
+                      </CardHeader>
+                      {isScheduled && (
+                        <CardBody>
+                          <Row className="g-3">
+                            <Col md={4}>
+                              <Form.Group>
+                                <Form.Label>📆 Visible From</Form.Label>
+                                <Form.Control 
+                                  type="datetime-local" 
+                                  value={visibleFrom}
+                                  onChange={(e) => setVisibleFrom(e.target.value)}
+                                />
+                                <Form.Text className="text-muted">
+                                  Video becomes visible from this date/time
+                                </Form.Text>
+                              </Form.Group>
+                            </Col>
+                            <Col md={4}>
+                              <Form.Group>
+                                <Form.Label>📆 Visible Until (Expiry)</Form.Label>
+                                <Form.Control 
+                                  type="datetime-local" 
+                                  value={visibleUntil}
+                                  onChange={(e) => setVisibleUntil(e.target.value)}
+                                  min={visibleFrom}
+                                />
+                                <Form.Text className="text-muted">
+                                  Video expires and becomes hidden after this date/time
+                                </Form.Text>
+                              </Form.Group>
+                            </Col>
+                            <Col md={4}>
+                              <Form.Group className="mt-4">
+                                <Form.Check 
+                                  type="checkbox"
+                                  id="auto-delete"
+                                  label="🗑️ Auto-delete on expiry"
+                                  checked={autoDeleteOnExpiry}
+                                  onChange={(e) => setAutoDeleteOnExpiry(e.target.checked)}
+                                />
+                                <Form.Text className="text-danger">
+                                  Warning: Video will be permanently deleted after expiry
+                                </Form.Text>
+                              </Form.Group>
+                            </Col>
+                            {visibleFrom && visibleUntil && (
+                              <Col md={12}>
+                                <div className="alert alert-info mb-0">
+                                  <strong>Schedule Preview:</strong> This video will be visible from{' '}
+                                  <Badge bg="success">{new Date(visibleFrom).toLocaleString()}</Badge> to{' '}
+                                  <Badge bg="danger">{new Date(visibleUntil).toLocaleString()}</Badge>
+                                  {autoDeleteOnExpiry && (
+                                    <span className="text-danger ms-2">
+                                      (Will be auto-deleted after expiry)
+                                    </span>
+                                  )}
+                                </div>
+                              </Col>
+                            )}
+                          </Row>
+                        </CardBody>
+                      )}
+                    </Card>
                   </Col>
                 </Row>
               </Tab>
