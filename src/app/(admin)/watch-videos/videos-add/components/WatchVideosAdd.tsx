@@ -638,7 +638,7 @@ const WatchVideosAdd = () => {
                   {/* Images */}
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label>Thumbnail Image</Form.Label>
+                      <Form.Label>Horizontal Poster</Form.Label>
                       <Form.Control 
                         type="file" 
                         accept="image/*"
