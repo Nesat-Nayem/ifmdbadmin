@@ -15,46 +15,46 @@ export const MENU_ITEMS: MenuItemType[] = [
   },
 
   // ============ ADMIN ONLY SECTIONS ============
-  {
-    key: 'onboarding',
-    label: 'OnBoarding',
-    icon: 'solar:star-bold-duotone',
-    allowedRoles: ['admin'],
-    children: [
-      {
-        key: 'onboarding-add',
-        label: 'Add Onboarding',
-        url: '/onboarding/onboarding-add',
-        parentKey: 'onboarding',
-      },
-      {
-        key: 'onboarding-list',
-        label: 'Onboarding List',
-        url: '/onboarding/onboarding-list',
-        parentKey: 'onboarding',
-      },
-    ],
-  },
-  {
-    key: 'category',
-    icon: 'solar:clipboard-list-bold-duotone',
-    label: 'Category',
-    allowedRoles: ['admin'],
-    children: [
-      {
-        key: 'category-add',
-        label: 'Create Category',
-        url: '/category/category-add',
-        parentKey: 'category',
-      },
-      {
-        key: 'category-list',
-        label: 'Category List',
-        url: '/category/category-list',
-        parentKey: 'category',
-      },
-    ],
-  },
+  // {
+  //   key: 'onboarding',
+  //   label: 'OnBoarding',
+  //   icon: 'solar:star-bold-duotone',
+  //   allowedRoles: ['admin'],
+  //   children: [
+  //     {
+  //       key: 'onboarding-add',
+  //       label: 'Add Onboarding',
+  //       url: '/onboarding/onboarding-add',
+  //       parentKey: 'onboarding',
+  //     },
+  //     {
+  //       key: 'onboarding-list',
+  //       label: 'Onboarding List',
+  //       url: '/onboarding/onboarding-list',
+  //       parentKey: 'onboarding',
+  //     },
+  //   ],
+  // },
+  // {
+  //   key: 'category',
+  //   icon: 'solar:clipboard-list-bold-duotone',
+  //   label: 'Category',
+  //   allowedRoles: ['admin'],
+  //   children: [
+  //     {
+  //       key: 'category-add',
+  //       label: 'Create Category',
+  //       url: '/category/category-add',
+  //       parentKey: 'category',
+  //     },
+  //     {
+  //       key: 'category-list',
+  //       label: 'Category List',
+  //       url: '/category/category-list',
+  //       parentKey: 'category',
+  //     },
+  //   ],
+  // },
   {
     key: 'home-banner',
     label: 'Home Banner',
@@ -76,14 +76,14 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'bx:list-check',
     label: 'Bookings',
     children: [
-      {
-        key: 'movies-bookings',
-        label: 'Movies Bookings',
-        url: '/bookings/movies-bookings',
-        parentKey: 'bookings',
-        allowedRoles: ['admin', 'vendor'],
-        allowedServices: ['film_trade', 'movie_watch'],
-      },
+      // {
+      //   key: 'movies-bookings',
+      //   label: 'Movies Bookings',
+      //   url: '/bookings/movies-bookings',
+      //   parentKey: 'bookings',
+      //   allowedRoles: ['admin', 'vendor'],
+      //   allowedServices: ['film_trade', 'movie_watch'],
+      // },
       {
         key: 'events-bookings',
         label: 'Events Bookings',
@@ -240,26 +240,26 @@ export const MENU_ITEMS: MenuItemType[] = [
       },
     ],
   },
-  {
-    key: 'subscription',
-    label: 'Subscription Plan',
-    icon: 'solar:dollar-bold-duotone',
-    allowedRoles: ['admin'],
-    children: [
-      {
-        key: 'subscription-add',
-        label: 'Create Plan',
-        url: '/subscription/subscription-add',
-        parentKey: 'subscription',
-      },
-      {
-        key: 'subscription-list',
-        label: 'Subscription List',
-        url: '/subscription/subscription-list',
-        parentKey: 'subscription',
-      },
-    ],
-  },
+  // {
+  //   key: 'subscription',
+  //   label: 'Subscription Plan',
+  //   icon: 'solar:dollar-bold-duotone',
+  //   allowedRoles: ['admin'],
+  //   children: [
+  //     {
+  //       key: 'subscription-add',
+  //       label: 'Create Plan',
+  //       url: '/subscription/subscription-add',
+  //       parentKey: 'subscription',
+  //     },
+  //     {
+  //       key: 'subscription-list',
+  //       label: 'Subscription List',
+  //       url: '/subscription/subscription-list',
+  //       parentKey: 'subscription',
+  //     },
+  //   ],
+  // },
   // {
   //   key: 'cinema-hall',
   //   label: 'Cinema Hall',
@@ -336,56 +336,56 @@ export const MENU_ITEMS: MenuItemType[] = [
   },
 
   // ============ USERS (Admin Only) ============
-  {
-    key: 'users',
-    label: 'USERS',
-    isTitle: true,
-    allowedRoles: ['admin'],
-  },
-  {
-    key: 'vendors-list',
-    label: 'Approved Vendors',
-    icon: 'solar:user-check-bold-duotone',
-    url: '/vendors/vendors-list',
-    parentKey: 'users',
-    allowedRoles: ['admin'],
-  },
-  {
-    key: 'vendors-payment-history',
-    label: 'Vendors Payment History',
-    icon: 'solar:dollar-bold-duotone',
-    url: '/vendors/vendors-payment-history',
-    parentKey: 'users',
-    allowedRoles: ['admin'],
-  },
+  // {
+  //   key: 'payment',
+  //   label: 'Payment',
+  //   isTitle: true,
+  //   allowedRoles: ['admin'],
+  // },
+  // {
+  //   key: 'vendors-list',
+  //   label: 'Approved Vendors',
+  //   icon: 'solar:user-check-bold-duotone',
+  //   url: '/vendors/vendors-list',
+  //   parentKey: 'users',
+  //   allowedRoles: ['admin'],
+  // },
+  // {
+  //   key: 'vendors-payment-history',
+  //   label: 'Vendors Payment History',
+  //   icon: 'solar:dollar-bold-duotone',
+  //   url: '/vendors/vendors-payment-history',
+  //   parentKey: 'users',
+  //   allowedRoles: ['admin'],
+  // },
 
   // ============ ROLES (Admin Only) ============
-  {
-    key: 'role',
-    label: 'ROLES',
-    isTitle: true,
-    allowedRoles: ['admin'],
-  },
-  {
-    key: 'access-management',
-    label: 'Roles Management',
-    icon: 'solar:user-bold-duotone',
-    allowedRoles: ['admin'],
-    children: [
-      {
-        key: 'roles-add',
-        label: 'Add Role',
-        url: '/role/add-role',
-        parentKey: 'role',
-      },
-      {
-        key: 'roles-list',
-        label: 'Roles List',
-        url: '/role/role-list',
-        parentKey: 'role',
-      },
-    ],
-  },
+  // {
+  //   key: 'role',
+  //   label: 'ROLES',
+  //   isTitle: true,
+  //   allowedRoles: ['admin'],
+  // },
+  // {
+  //   key: 'access-management',
+  //   label: 'Roles Management',
+  //   icon: 'solar:user-bold-duotone',
+  //   allowedRoles: ['admin'],
+  //   children: [
+  //     {
+  //       key: 'roles-add',
+  //       label: 'Add Role',
+  //       url: '/role/add-role',
+  //       parentKey: 'role',
+  //     },
+  //     {
+  //       key: 'roles-list',
+  //       label: 'Roles List',
+  //       url: '/role/role-list',
+  //       parentKey: 'role',
+  //     },
+  //   ],
+  // },
 
   // ============ PROFILE & SETTINGS ============
   {
@@ -394,8 +394,8 @@ export const MENU_ITEMS: MenuItemType[] = [
     isTitle: true,
   },
   {
-    key: 'my-profile',
-    label: 'My Profile',
+    key: 'profile',
+    label: 'Profile',
     icon: 'solar:user-circle-bold-duotone',
     url: '/profile',
   },
@@ -451,7 +451,7 @@ export const MENU_ITEMS: MenuItemType[] = [
   },
   {
     key: 'enquires-list',
-    label: 'My Enquires',
+    label: 'Enquires',
     icon: 'solar:document-text-bold-duotone',
     url: '/enquires/enquires-list',
     parentKey: 'enquires',
