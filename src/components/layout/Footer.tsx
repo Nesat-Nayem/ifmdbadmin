@@ -7,7 +7,7 @@ const Footer = () => {
       <Container fluid>
         <Row>
           <Col xs={12} className="text-center">
-            © Copyrights {new Date().getFullYear()}. All rights reserved.
+            © Copyrights {new Date().getFullYear()}. Movie Mart All rights reserved.
           </Col>
         </Row>
       </Container>

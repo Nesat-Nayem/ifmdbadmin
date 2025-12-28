@@ -70,36 +70,13 @@ export const MENU_ITEMS: MenuItemType[] = [
     allowedRoles: ['admin'],
   },
 
-  // ============ BOOKINGS (Role + Service based) ============
-  {
-    key: 'bookings',
-    icon: 'bx:list-check',
-    label: 'Bookings',
-    children: [
-      // {
-      //   key: 'movies-bookings',
-      //   label: 'Movies Bookings',
-      //   url: '/bookings/movies-bookings',
-      //   parentKey: 'bookings',
-      //   allowedRoles: ['admin', 'vendor'],
-      //   allowedServices: ['film_trade', 'movie_watch'],
-      // },
-      {
-        key: 'events-bookings',
-        label: 'Events Bookings',
-        url: '/bookings/events-bookings',
-        parentKey: 'bookings',
-        allowedRoles: ['admin', 'vendor'],
-        allowedServices: ['events'],
-      },
-    ],
-  },
+
 
   // ============ MOVIES (Admin + Film Trade/Movie Watch Vendors) ============
   {
-    key: 'movies',
+    key: 'filmtrade',
     icon: 'bx:movie',
-    label: 'Movies',
+    label: 'Film Trade',
     allowedRoles: ['admin', 'vendor'],
     allowedServices: ['film_trade', 'movie_watch'],
     children: [
@@ -169,6 +146,32 @@ export const MENU_ITEMS: MenuItemType[] = [
     ],
   },
 
+    // ============ BOOKINGS (Role + Service based) ============
+  {
+    key: 'bookings',
+    icon: 'bx:list-check',
+    label: 'Event Ticket Bookings',
+    children: [
+      // {
+      //   key: 'movies-bookings',
+      //   label: 'Movies Bookings',
+      //   url: '/bookings/movies-bookings',
+      //   parentKey: 'bookings',
+      //   allowedRoles: ['admin', 'vendor'],
+      //   allowedServices: ['film_trade', 'movie_watch'],
+      // },
+      {
+        key: 'events-bookings',
+        label: 'Events Bookings',
+        url: '/bookings/events-bookings',
+        parentKey: 'bookings',
+        allowedRoles: ['admin', 'vendor'],
+        allowedServices: ['events'],
+      },
+    ],
+  },
+
+  
   // ============ WATCH VIDEOS (Admin + Movie Watch Vendors) ============
   {
     key: 'watch-videos',
