@@ -916,6 +916,101 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
               </div>
             </Col>
 
+            {/* Visibility Schedule Section */}
+            <Col lg={12} className="mt-4">
+              <Card className="border-warning">
+                <CardHeader className="bg-warning bg-opacity-10 d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 className="mb-0">📅 Visibility Schedule (Time-Limited Trade)</h6>
+                    <small className="text-muted">Set when this movie should be visible and when it expires</small>
+                  </div>
+                  <div className="form-check form-switch">
+                    <Controller
+                      control={control}
+                      name="isScheduled"
+                      render={({ field }) => (
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="isScheduled"
+                          checked={!!field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      )}
+                    />
+                    <label className="form-check-label" htmlFor="isScheduled">Enable Schedule</label>
+                  </div>
+                </CardHeader>
+                <Controller
+                  control={control}
+                  name="isScheduled"
+                  render={({ field: { value: isScheduled } }) => (
+                    <>
+                      {isScheduled && (
+                        <CardBody>
+                          <Row className="g-3">
+                            <Col md={4}>
+                              <label className="form-label">📆 Visible From</label>
+                              <Controller
+                                control={control}
+                                name="visibleFrom"
+                                render={({ field }) => (
+                                  <input
+                                    type="datetime-local"
+                                    className={`form-control ${errors.visibleFrom ? 'is-invalid' : ''}`}
+                                    {...field}
+                                  />
+                                )}
+                              />
+                              {errors.visibleFrom && <div className="invalid-feedback">{errors.visibleFrom.message}</div>}
+                              <small className="text-muted d-block mt-1">Movie becomes visible from this date/time</small>
+                            </Col>
+                            <Col md={4}>
+                              <label className="form-label">📆 Visible Until (Expiry)</label>
+                              <Controller
+                                control={control}
+                                name="visibleUntil"
+                                render={({ field }) => (
+                                  <input
+                                    type="datetime-local"
+                                    className={`form-control ${errors.visibleUntil ? 'is-invalid' : ''}`}
+                                    {...field}
+                                  />
+                                )}
+                              />
+                              {errors.visibleUntil && <div className="invalid-feedback">{errors.visibleUntil.message}</div>}
+                              <small className="text-muted d-block mt-1">Movie expires and becomes hidden after this date/time</small>
+                            </Col>
+                            <Col md={4}>
+                              <div className="form-check mt-4 pt-2">
+                                <Controller
+                                  control={control}
+                                  name="autoDeleteOnExpiry"
+                                  render={({ field }) => (
+                                    <input
+                                      type="checkbox"
+                                      className="form-check-input"
+                                      id="autoDeleteOnExpiry"
+                                      checked={!!field.value}
+                                      onChange={(e) => field.onChange(e.target.checked)}
+                                    />
+                                  )}
+                                />
+                                <label className="form-check-label text-danger fw-medium" htmlFor="autoDeleteOnExpiry">
+                                  🗑️ Auto-delete on expiry
+                                </label>
+                                <small className="text-danger d-block mt-1">Warning: Movie will be permanently deleted after expiry</small>
+                              </div>
+                            </Col>
+                          </Row>
+                        </CardBody>
+                      )}
+                    </>
+                  )}
+                />
+              </Card>
+            </Col>
+
             {/* Description */}
             <Col lg={12}>
               <div className="mb-3">
@@ -1340,7 +1435,19 @@ const MoviesAdd = () => {
     uaCertification: yup.string().optional(),
     isActive: yup.boolean().optional(),
     homeSection: yup.string().oneOf(['', 'hot_rights_available', 'profitable_picks', 'international_deals', 'indie_gems']).optional(),
-    tradeStatus: yup.string().oneOf(['get_it_now', 'sold_out', 'out_of_stock', 'coming_soon', 'limited_offer', 'negotiating']).optional(),
+    tradeStatus: yup.string().oneOf(['get_it_now', 'sold_out', 'out_of_stock', 'coming_soon', 'limited_offer', 'negotiating']).default('get_it_now'),
+    isScheduled: yup.boolean().default(false),
+    visibleFrom: yup.string().when('isScheduled', {
+      is: true,
+      then: (schema) => schema.required('Visible from date is required'),
+      otherwise: (schema) => schema.optional().nullable(),
+    }),
+    visibleUntil: yup.string().when('isScheduled', {
+      is: true,
+      then: (schema) => schema.required('Visible until date is required'),
+      otherwise: (schema) => schema.optional().nullable(),
+    }),
+    autoDeleteOnExpiry: yup.boolean().default(false),
   })
 
   const {
@@ -1391,6 +1498,10 @@ const MoviesAdd = () => {
       crew: [],
       homeSection: '',
       tradeStatus: 'get_it_now',
+      isScheduled: false,
+      visibleFrom: '',
+      visibleUntil: '',
+      autoDeleteOnExpiry: false,
     },
   })
 
@@ -1438,6 +1549,7 @@ const MoviesAdd = () => {
           website: data.website,
           address: data.address,
           state: data.state,
+          country: data.country,
           phone: data.phone,
           email: data.email,
         },
@@ -1449,10 +1561,15 @@ const MoviesAdd = () => {
           countryCode: p.countryCode,
           countryName: p.countryName,
           currency: p.currency,
-          askingPrice: Number(p.askingPrice) || 0,
-          negotiable: p.negotiable ?? true,
-          notes: p.notes || '',
+          askingPrice: Number(p.askingPrice),
+          negotiable: p.negotiable,
+          notes: p.notes,
         })),
+        // Visibility Schedule
+        isScheduled: data.isScheduled,
+        visibleFrom: data.isScheduled && data.visibleFrom ? new Date(data.visibleFrom).toISOString() : null,
+        visibleUntil: data.isScheduled && data.visibleUntil ? new Date(data.visibleUntil).toISOString() : null,
+        autoDeleteOnExpiry: data.isScheduled ? data.autoDeleteOnExpiry : false,
       }
 
       // ✅ send JSON object (not FormData)

@@ -34,14 +34,18 @@ const SignIn = () => {
             </div>
           </Col>
 
-          {/* Right Side - Image */}
+          {/* Right Side - Image/Branding */}
           <Col xxl={5} lg={5} className="d-none d-lg-flex">
-            <div className="position-relative w-100 h-100">
-              <Image src={smallImg} alt="auth background" className="w-100 h-100 object-fit-contain" priority />
-              <div className="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-25" />
-              <div className="position-absolute bottom-0 start-0 p-4 text-white">
-                <h4 className="fw-bold">Secure & Reliable</h4>
-                <p className="mb-0 small">Manage your movies, events & tickets easily.</p>
+            <div className="position-relative w-100 h-100 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+              <div className="text-center p-5">
+                <Image src={logoUrl} alt="Film Mart Logo" className="mb-4" width={150} height={150} unoptimized={isExternal} />
+                <h3 className="fw-bold text-primary mb-3">Film Mart Admin</h3>
+                <p className="text-muted mb-0">The ultimate destination for movie trade, event bookings, and digital cinema management.</p>
+                <div className="mt-4 pt-2">
+                  <span className="badge bg-soft-primary text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">
+                    Secure & Professional
+                  </span>
+                </div>
               </div>
             </div>
           </Col>

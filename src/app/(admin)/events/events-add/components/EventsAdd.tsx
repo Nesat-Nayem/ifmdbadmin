@@ -46,6 +46,18 @@ const schema = yup.object().shape({
   maxTicketsPerPerson: yup.number().typeError('Enter valid number').default(10),
   tagsInput: yup.string().required('Tags required'),
   homeSection: yup.string().oneOf(['', 'trending_events', 'celebrity_events', 'exclusive_invite_only', 'near_you']).optional(),
+  isScheduled: yup.boolean().default(false),
+  visibleFrom: yup.string().when('isScheduled', {
+    is: true,
+    then: (schema) => schema.required('Visible from date is required'),
+    otherwise: (schema) => schema.optional().nullable(),
+  }),
+  visibleUntil: yup.string().when('isScheduled', {
+    is: true,
+    then: (schema) => schema.required('Visible until date is required'),
+    otherwise: (schema) => schema.optional().nullable(),
+  }),
+  autoDeleteOnExpiry: yup.boolean().default(false),
 })
 
 type FormValues = yup.InferType<typeof schema> & {
@@ -257,6 +269,11 @@ const EventsAdd = () => {
           .filter((t: string) => t.length > 0),
         isActive: true,
         homeSection: values.homeSection || '',
+        // Visibility Schedule
+        isScheduled: values.isScheduled,
+        visibleFrom: values.isScheduled && values.visibleFrom ? new Date(values.visibleFrom).toISOString() : null,
+        visibleUntil: values.isScheduled && values.visibleUntil ? new Date(values.visibleUntil).toISOString() : null,
+        autoDeleteOnExpiry: values.isScheduled ? values.autoDeleteOnExpiry : false,
       }
 
       setUploadProgress(90)
@@ -435,6 +452,82 @@ const EventsAdd = () => {
                     <option value="near_you">Near You</option>
                   </select>
                   <small className="text-muted">Select a section to feature this event on the home page</small>
+                </Col>
+
+                {/* Visibility Schedule Section */}
+                <Col lg={12} className="mt-4">
+                  <Card className="border-warning">
+                    <CardHeader className="bg-warning bg-opacity-10 d-flex align-items-center justify-content-between">
+                      <div>
+                        <h6 className="mb-0">📅 Visibility Schedule (Time-Limited Event)</h6>
+                        <small className="text-muted">Set when this event should be visible and when it expires</small>
+                      </div>
+                      <div className="form-check form-switch">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="isScheduled"
+                          {...register('isScheduled')}
+                        />
+                        <label className="form-check-label" htmlFor="isScheduled">Enable Schedule</label>
+                      </div>
+                    </CardHeader>
+                    {watch('isScheduled') && (
+                      <CardBody>
+                        <Row className="g-3">
+                          <Col md={4}>
+                            <label className="form-label">📆 Visible From</label>
+                            <input
+                              type="datetime-local"
+                              className={`form-control ${errors.visibleFrom ? 'is-invalid' : ''}`}
+                              {...register('visibleFrom')}
+                            />
+                            {errors.visibleFrom && <div className="invalid-feedback">{errors.visibleFrom.message}</div>}
+                            <small className="text-muted d-block mt-1">Event becomes visible from this date/time</small>
+                          </Col>
+                          <Col md={4}>
+                            <label className="form-label">📆 Visible Until (Expiry)</label>
+                            <input
+                              type="datetime-local"
+                              className={`form-control ${errors.visibleUntil ? 'is-invalid' : ''}`}
+                              {...register('visibleUntil')}
+                              min={watch('visibleFrom') || undefined}
+                            />
+                            {errors.visibleUntil && <div className="invalid-feedback">{errors.visibleUntil.message}</div>}
+                            <small className="text-muted d-block mt-1">Event expires and becomes hidden after this date/time</small>
+                          </Col>
+                          <Col md={4}>
+                            <div className="form-check mt-4 pt-2">
+                              <input
+                                type="checkbox"
+                                className="form-check-input"
+                                id="autoDeleteOnExpiry"
+                                {...register('autoDeleteOnExpiry')}
+                              />
+                              <label className="form-check-label text-danger fw-medium" htmlFor="autoDeleteOnExpiry">
+                                🗑️ Auto-delete on expiry
+                              </label>
+                              <small className="text-danger d-block mt-1">Warning: Event will be permanently deleted after expiry</small>
+                            </div>
+                          </Col>
+                          {watch('visibleFrom') && watch('visibleUntil') && (
+                            <Col md={12}>
+                              <div className="alert alert-info mb-0">
+                                <strong>Schedule Preview:</strong> This event will be visible from{' '}
+                                <span className="badge bg-success">{new Date(watch('visibleFrom')!).toLocaleString()}</span> to{' '}
+                                <span className="badge bg-danger">{new Date(watch('visibleUntil')!).toLocaleString()}</span>
+                                {watch('autoDeleteOnExpiry') && (
+                                  <span className="text-danger ms-2 fw-bold">
+                                    (Will be auto-deleted after expiry)
+                                  </span>
+                                )}
+                              </div>
+                            </Col>
+                          )}
+                        </Row>
+                      </CardBody>
+                    )}
+                  </Card>
                 </Col>
               </Row>
             </CardBody>
