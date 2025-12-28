@@ -28,6 +28,7 @@ import { watchVideosApi } from './watchVideosApi'
 import { walletApi } from './walletApi'
 import { profileApi } from './profileApi'
 import { sectionSettingsApi } from './sectionSettingsApi'
+import { dashboardApi } from './dashboardApi'
 
 export const store = configureStore({
   reducer: {
@@ -60,6 +61,7 @@ export const store = configureStore({
     [walletApi.reducerPath]: walletApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [sectionSettingsApi.reducerPath]: sectionSettingsApi.reducer,
+    [dashboardApi.reducerPath]: dashboardApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -93,6 +95,7 @@ export const store = configureStore({
       walletApi.middleware,
       profileApi.middleware,
       sectionSettingsApi.middleware,
+      dashboardApi.middleware,
     ),
 })
 

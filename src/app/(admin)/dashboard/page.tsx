@@ -1,15 +1,13 @@
 import { Row } from 'react-bootstrap'
 import { Metadata } from 'next'
-import StatsCard from './components/Stats'
+import DashboardStats from './components/DashboardStats'
 
-export const metadata: Metadata = { title: 'Dashboard' }
+export const metadata: Metadata = { title: 'Dashboard | Film Mart Admin' }
 
 const DashboardPage = () => {
   return (
     <>
-      <Row>
-        <StatsCard />
-      </Row>
+      <DashboardStats />
     </>
   )
 }
