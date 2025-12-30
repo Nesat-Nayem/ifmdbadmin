@@ -29,6 +29,7 @@ import { walletApi } from './walletApi'
 import { profileApi } from './profileApi'
 import { sectionSettingsApi } from './sectionSettingsApi'
 import { dashboardApi } from './dashboardApi'
+import { scannerApi } from './scannerApi'
 
 export const store = configureStore({
   reducer: {
@@ -62,6 +63,7 @@ export const store = configureStore({
     [profileApi.reducerPath]: profileApi.reducer,
     [sectionSettingsApi.reducerPath]: sectionSettingsApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [scannerApi.reducerPath]: scannerApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -96,6 +98,7 @@ export const store = configureStore({
       profileApi.middleware,
       sectionSettingsApi.middleware,
       dashboardApi.middleware,
+      scannerApi.middleware,
     ),
 })
 

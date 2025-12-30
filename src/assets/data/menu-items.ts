@@ -146,6 +146,35 @@ export const MENU_ITEMS: MenuItemType[] = [
     ],
   },
 
+  // ============ TICKET SCANNER ACCESS (Events Vendors) ============
+  {
+    key: 'ticket-scanner',
+    icon: 'solar:qr-code-bold-duotone',
+    label: 'Ticket Scanner',
+    allowedRoles: ['admin', 'vendor'],
+    allowedServices: ['events'],
+    children: [
+      {
+        key: 'scanner-access-add',
+        label: 'Add Scanner Access',
+        url: '/ticket-scanner/add',
+        parentKey: 'ticket-scanner',
+      },
+      {
+        key: 'scanner-access-list',
+        label: 'Scanner Accounts',
+        url: '/ticket-scanner/list',
+        parentKey: 'ticket-scanner',
+      },
+      {
+        key: 'scanner-logs',
+        label: 'Scan Logs',
+        url: '/ticket-scanner/logs',
+        parentKey: 'ticket-scanner',
+      },
+    ],
+  },
+
     // ============ BOOKINGS (Role + Service based) ============
   {
     key: 'bookings',
