@@ -8,6 +8,7 @@ import { useGetGeneralSettingsQuery } from '@/store/generalSettingsApi'
 const LogoBox = () => {
   const { data: generalSettings } = useGetGeneralSettingsQuery()
   
+  
   // Use dynamic logo from settings or fallback to default
   const logoUrl = generalSettings?.logo || defaultLogo
   const isExternal = typeof logoUrl === 'string' && (logoUrl.includes('cloudinary') || logoUrl.includes('http'))
