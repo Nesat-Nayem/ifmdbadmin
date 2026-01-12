@@ -72,7 +72,7 @@ interface EventsResponse {
 export const eventsApi = createApi({
   reducerPath: 'eventsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.moviemart.org/v1/api',
+    baseUrl: 'http://localhost:8080/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth?.token
       if (token) {
@@ -84,7 +84,7 @@ export const eventsApi = createApi({
   tagTypes: ['Events'],
   endpoints: (builder) => ({
     getEvents: builder.query<IEvents[], void>({
-      query: () => '/events',
+      query: () => '/events?vendorOnly=true',
       transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
       providesTags: ['Events'],
     }),

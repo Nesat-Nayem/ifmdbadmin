@@ -137,7 +137,7 @@ interface ApiResponse<T> {
 export const watchVideosApi = createApi({
   reducerPath: 'watchVideosApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.moviemart.org/v1/api',
+    baseUrl: 'http://localhost:8080/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth?.token
       if (token) {
@@ -153,6 +153,7 @@ export const watchVideosApi = createApi({
     getChannels: builder.query<{ data: IChannel[]; meta: any }, any>({
       query: (params) => {
         const queryParams = new URLSearchParams()
+        queryParams.append('vendorOnly', 'true')
         if (params?.page) queryParams.append('page', String(params.page))
         if (params?.limit) queryParams.append('limit', String(params.limit))
         if (params?.search) queryParams.append('search', params.search)
@@ -241,6 +242,7 @@ export const watchVideosApi = createApi({
     getWatchVideos: builder.query<{ data: IWatchVideo[]; meta: any }, any>({
       query: (params) => {
         const queryParams = new URLSearchParams()
+        queryParams.append('vendorOnly', 'true')
         if (params?.page) queryParams.append('page', String(params.page))
         if (params?.limit) queryParams.append('limit', String(params.limit))
         if (params?.search) queryParams.append('search', params.search)
