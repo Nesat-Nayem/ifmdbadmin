@@ -440,10 +440,10 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
               </div>
             </Col>
 
-            {/* IMDB Rating */}
+            {/* Moviemart Rating */}
             <Col lg={6}>
               <div className="mb-3">
-                <label className="form-label">IMDB Rating</label>
+                <label className="form-label">Moviemart Rating</label>
                 <Controller
                   control={control}
                   name="imdbRating"
@@ -1412,10 +1412,10 @@ const MoviesAdd = () => {
     rating: yup.string().oneOf(['G', 'PG', 'PG-13', 'R', 'NC-17', 'NR'], 'Invalid rating').required('Please select rating'),
     imdbRating: yup
       .number()
-      .typeError('IMDB rating must be a number')
-      .min(0, 'IMDB rating must be at least 0')
-      .max(10, 'IMDB rating must be 10 or less')
-      .required('Please enter IMDB rating'),
+      .typeError('Moviemart rating must be a number')
+      .min(0, 'Moviemart rating must be at least 0')
+      .max(10, 'Moviemart rating must be 10 or less')
+      .required('Please enter Moviemart rating'),
     rottenTomatoesRating: yup.number().min(0).max(100).optional(),
     posterUrl: yup.string().url('Please enter a valid URL').required('Please enter poster URL'),
     trailerUrl: yup.string().url().optional(),

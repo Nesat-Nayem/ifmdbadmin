@@ -63,7 +63,7 @@ const schema = yup.object({
   producer: yup.string().optional(),
   productionCost: yup.number().typeError('Must be a number').min(0).optional(),
   rating: yup.mixed().oneOf(['G', 'PG', 'PG-13', 'R', 'NC-17', 'NR', '']).required('Please select rating'),
-  imdbRating: yup.number().typeError('Must be a number').min(0).max(10).required('Please enter IMDB rating'),
+  imdbRating: yup.number().typeError('Must be a number').min(0).max(10).required('Please enter Moviemart rating'),
   rottenTomatoesRating: yup.number().min(0).max(100).optional(),
   formats: yup.array(yup.string()).optional(),
   languages: yup.array(yup.string()).min(1, 'Please enter at least one language').required(),
@@ -658,7 +658,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
 
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">IMDB Rating</label>
+                  <label className="form-label">Moviemart Rating</label>
                   <Controller control={control} name="imdbRating" render={({ field }) => <input {...field} type="number" step="0.1" min={0} max={10} className="form-control" />} />
                 </div>
               </Col>

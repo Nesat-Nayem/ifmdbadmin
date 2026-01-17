@@ -162,7 +162,7 @@ const MoviesView = () => {
                 </li>
               </ul>
               <p className="mb-0 fw-medium fs-18 text-dark">
-                IMDb {movie.imdbRating}
+                Moviemart {movie.imdbRating}
                 <span className="text-muted fs-13 ms-1">({movie.totalReviews} Reviews, Avg {movie.averageRating})</span>
                 {typeof (movie as any).rottenTomatoesRating === 'number' && (
                   <span className="ms-2">| RT {(movie as any).rottenTomatoesRating}%</span>
