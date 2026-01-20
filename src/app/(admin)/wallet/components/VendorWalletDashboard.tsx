@@ -358,6 +358,12 @@ const VendorWalletDashboard = () => {
                       {txn.metadata?.itemTitle && (
                         <small className="d-block text-muted">{txn.metadata.itemTitle}</small>
                       )}
+                      {txn.metadata?.isGovernmentEvent && (
+                        <Badge bg="success" className="ms-1">🏛️ Govt Event</Badge>
+                      )}
+                      {txn.metadata?.platformFeePercentage && (
+                        <small className="d-block text-info">Fee: {txn.metadata.platformFeePercentage}%</small>
+                      )}
                     </td>
                     <td>{getTransactionTypeBadge(txn.type)}</td>
                     <td>{formatCurrency(txn.amount)}</td>

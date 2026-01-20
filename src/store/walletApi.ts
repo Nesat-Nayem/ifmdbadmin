@@ -47,6 +47,8 @@ export interface IWalletTransaction {
     customerName?: string
     customerEmail?: string
     itemTitle?: string
+    isGovernmentEvent?: boolean
+    platformFeePercentage?: number
   }
   createdAt: string
   updatedAt: string

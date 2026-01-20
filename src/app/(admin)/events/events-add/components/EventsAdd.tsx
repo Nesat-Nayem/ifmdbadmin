@@ -58,6 +58,7 @@ const schema = yup.object().shape({
     otherwise: (schema) => schema.optional().nullable(),
   }),
   autoDeleteOnExpiry: yup.boolean().default(false),
+  isGovernmentEvent: yup.boolean().default(false),
 })
 
 type FormValues = yup.InferType<typeof schema> & {
@@ -110,6 +111,7 @@ const EventsAdd = () => {
       eventLanguage: 'English',
       maxTicketsPerPerson: 10,
       homeSection: '',
+      isGovernmentEvent: false,
     }
   })
 
@@ -269,6 +271,7 @@ const EventsAdd = () => {
           .filter((t: string) => t.length > 0),
         isActive: true,
         homeSection: values.homeSection || '',
+        isGovernmentEvent: values.isGovernmentEvent || false, // Government events have fixed 10% platform fee
         // Visibility Schedule
         isScheduled: values.isScheduled,
         visibleFrom: values.isScheduled && values.visibleFrom ? new Date(values.visibleFrom).toISOString() : null,
@@ -439,6 +442,27 @@ const EventsAdd = () => {
                     <option value="cancelled">Cancelled</option>
                   </select>
                   {errors.status && <small className="text-danger">{errors.status.message}</small>}
+                </Col>
+
+                {/* Government Event Option */}
+                <Col lg={6} className="mt-3">
+                  <div className="form-check form-switch p-3 border rounded bg-light">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="isGovernmentEvent"
+                      {...register('isGovernmentEvent')}
+                    />
+                    <label className="form-check-label fw-bold" htmlFor="isGovernmentEvent">
+                      🏛️ Government Event
+                    </label>
+                    <small className="d-block text-muted mt-1">
+                      Government events have a fixed 10% platform fee instead of the standard rate.
+                    </small>
+                    {watch('isGovernmentEvent') && (
+                      <span className="badge bg-success mt-2">✓ Fixed 10% Platform Fee Applied</span>
+                    )}
+                  </div>
                 </Col>
 
                 {/* Home Section */}
