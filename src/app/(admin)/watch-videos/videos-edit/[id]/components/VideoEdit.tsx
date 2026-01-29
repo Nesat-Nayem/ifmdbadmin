@@ -722,6 +722,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                         <option value="exclusive_on_moviemart">Exclusive on Movie Mart</option>
                         <option value="new_release">New Release</option>
                       </Form.Select>
+                      <Form.Text className="text-muted">Select a section to feature this video on the home page</Form.Text>
                     </Form.Group>
                   </Col>
                   {!isFree && (
