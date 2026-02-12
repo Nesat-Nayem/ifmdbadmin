@@ -20,18 +20,14 @@ import {
 import {
   useGetWalletStatsQuery,
   useUpdateBankDetailsMutation,
-  useRequestWithdrawalMutation,
   IBankDetails,
 } from '@/store/walletApi'
 
 const VendorWalletDashboard = () => {
   const { data: stats, isLoading, isError, refetch } = useGetWalletStatsQuery()
   const [updateBankDetails, { isLoading: isUpdatingBank }] = useUpdateBankDetailsMutation()
-  const [requestWithdrawal, { isLoading: isRequestingWithdrawal }] = useRequestWithdrawalMutation()
 
   const [showBankModal, setShowBankModal] = useState(false)
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
-  const [withdrawAmount, setWithdrawAmount] = useState('')
   const [bankForm, setBankForm] = useState<IBankDetails>({
     accountHolderName: '',
     accountNumber: '',
@@ -66,25 +62,16 @@ const VendorWalletDashboard = () => {
     }
   }
 
-  const handleRequestWithdrawal = async () => {
-    const amount = parseFloat(withdrawAmount)
-    if (isNaN(amount) || amount < 100) {
-      setMessage({ type: 'danger', text: 'Minimum withdrawal amount is ₹100' })
-      return
-    }
-    if (stats && amount > stats.wallet.balance) {
-      setMessage({ type: 'danger', text: 'Insufficient balance' })
-      return
-    }
+  const isRouteVendor = !!stats?.wallet?.razorpayLinkedAccountId
 
-    try {
-      await requestWithdrawal({ amount }).unwrap()
-      setMessage({ type: 'success', text: 'Withdrawal request submitted successfully!' })
-      setShowWithdrawModal(false)
-      setWithdrawAmount('')
-      refetch()
-    } catch (err: any) {
-      setMessage({ type: 'danger', text: err?.data?.message || 'Failed to request withdrawal' })
+  const getRouteStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'activated': return <Badge bg="success">Active</Badge>
+      case 'created': return <Badge bg="info">Pending Activation</Badge>
+      case 'suspended': return <Badge bg="danger">Suspended</Badge>
+      case 'failed': return <Badge bg="danger">Setup Failed</Badge>
+      case 'pending': return <Badge bg="warning">Pending</Badge>
+      default: return <Badge bg="secondary">Not Connected</Badge>
     }
   }
 
@@ -282,11 +269,11 @@ const VendorWalletDashboard = () => {
             </Card>
           </Col>
 
-          {/* Bank Details & Withdrawal */}
+          {/* Bank Details & Route Status */}
           <Col lg={6}>
             <Card className="h-100">
               <CardHeader className="d-flex justify-content-between align-items-center">
-                <CardTitle as="h5" className="mb-0">Bank Details</CardTitle>
+                <CardTitle as="h5" className="mb-0">Bank Details & Payment Setup</CardTitle>
                 <Button variant="outline-primary" size="sm" onClick={() => setShowBankModal(true)}>
                   {hasBankDetails ? 'Update' : 'Add'} Bank Details
                 </Button>
@@ -302,24 +289,34 @@ const VendorWalletDashboard = () => {
                       <p><strong>UPI ID:</strong> {stats.wallet.bankDetails?.upiId}</p>
                     )}
                     <hr />
-                    <Button
-                      variant="success"
-                      onClick={() => setShowWithdrawModal(true)}
-                      disabled={stats.wallet.balance < 100}
-                    >
-                      Request Withdrawal
-                    </Button>
-                    {stats.wallet.balance < 100 && (
-                      <small className="d-block text-muted mt-2">
-                        Minimum ₹100 required for withdrawal
-                      </small>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <strong>Route Payment Status:</strong>
+                      {getRouteStatusBadge(stats.wallet.razorpayAccountStatus)}
+                    </div>
+                    {isRouteVendor ? (
+                      <Alert variant="success" className="mb-0 mt-3">
+                        <small>
+                          <strong>Automatic Settlements Enabled</strong><br />
+                          Your earnings from events and movie purchases are automatically transferred
+                          to your bank account after the hold period. No manual withdrawal needed.
+                        </small>
+                      </Alert>
+                    ) : (
+                      <Alert variant="info" className="mb-0 mt-3">
+                        <small>
+                          <strong>Tip:</strong> Update your bank details to enable Razorpay Route
+                          automatic settlements. Your earnings will be directly sent to your bank account.
+                        </small>
+                      </Alert>
                     )}
                   </div>
                 ) : (
                   <div className="text-center py-4">
                     <i className="bi bi-bank fs-1 text-muted"></i>
                     <p className="text-muted mt-2">No bank details added yet</p>
-                    <p className="text-muted small">Add your bank details to enable withdrawals</p>
+                    <p className="text-muted small">
+                      Add your bank details to enable automatic payment settlements via Razorpay Route
+                    </p>
                   </div>
                 )}
               </CardBody>
@@ -463,47 +460,6 @@ const VendorWalletDashboard = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Withdrawal Modal */}
-      <Modal show={showWithdrawModal} onHide={() => setShowWithdrawModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Request Withdrawal</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Alert variant="info" className="mb-3">
-            <small>
-              <strong>Note:</strong> Withdrawal requests are processed within 24-48 hours. 
-              Minimum withdrawal amount is ₹100.
-            </small>
-          </Alert>
-          <p><strong>Available Balance:</strong> {formatCurrency(stats.wallet.balance)}</p>
-          <Form.Group className="mb-3">
-            <Form.Label>Amount to Withdraw *</Form.Label>
-            <Form.Control
-              type="number"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(e.target.value)}
-              min={100}
-              max={stats.wallet.balance}
-              placeholder="Enter amount"
-            />
-          </Form.Group>
-          <p className="text-muted small">
-            Funds will be transferred to: ****{stats.wallet.bankDetails?.accountNumber?.slice(-4)} ({stats.wallet.bankDetails?.bankName})
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowWithdrawModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="success"
-            onClick={handleRequestWithdrawal}
-            disabled={isRequestingWithdrawal || !withdrawAmount || parseFloat(withdrawAmount) < 100}
-          >
-            {isRequestingWithdrawal ? 'Processing...' : 'Request Withdrawal'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </Container>
   )
 }

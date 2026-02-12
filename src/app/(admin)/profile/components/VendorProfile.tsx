@@ -24,6 +24,7 @@ import { useGetProfileQuery, useUpdateProfileMutation, useChangePasswordMutation
 import {
   useGetWalletStatsQuery,
   useUpdateBankDetailsMutation,
+  useDeleteBankDetailsMutation,
   useRequestWithdrawalMutation,
   useGetMyWithdrawalsQuery,
   IBankDetails,
@@ -71,6 +72,7 @@ const VendorProfile = () => {
   const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation()
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation()
   const [updateBankDetails, { isLoading: isUpdatingBank }] = useUpdateBankDetailsMutation()
+  const [deleteBankDetails, { isLoading: isDeletingBank }] = useDeleteBankDetailsMutation()
   const [requestWithdrawal, { isLoading: isRequestingWithdrawal }] = useRequestWithdrawalMutation()
 
   // Populate forms with existing data
@@ -149,6 +151,27 @@ const VendorProfile = () => {
       refetchWallet()
     } catch (err: any) {
       showMessage('danger', err?.data?.message || 'Failed to update bank details')
+    }
+  }
+
+  const handleDeleteBankDetails = async () => {
+    if (!window.confirm('Are you sure you want to delete your bank details? This will also remove your Razorpay Route account.')) {
+      return
+    }
+    try {
+      await deleteBankDetails().unwrap()
+      setBankForm({
+        accountHolderName: '',
+        accountNumber: '',
+        ifscCode: '',
+        bankName: '',
+        branchName: '',
+        upiId: '',
+      })
+      showMessage('success', 'Bank details deleted successfully!')
+      refetchWallet()
+    } catch (err: any) {
+      showMessage('danger', err?.data?.message || 'Failed to delete bank details')
     }
   }
 
@@ -489,10 +512,23 @@ const VendorProfile = () => {
                             </Form.Group>
                           </Col>
                         </Row>
-                        <Button type="submit" variant="primary" disabled={isUpdatingBank}>
-                          {isUpdatingBank ? <Spinner size="sm" className="me-2" /> : null}
-                          Save Bank Details
-                        </Button>
+                        <div className="d-flex gap-2">
+                          <Button type="submit" variant="primary" disabled={isUpdatingBank || isDeletingBank}>
+                            {isUpdatingBank ? <Spinner size="sm" className="me-2" /> : null}
+                            Save Bank Details
+                          </Button>
+                          {walletStats?.wallet?.bankDetails?.accountNumber && (
+                            <Button
+                              type="button"
+                              variant="outline-danger"
+                              disabled={isUpdatingBank || isDeletingBank}
+                              onClick={handleDeleteBankDetails}
+                            >
+                              {isDeletingBank ? <Spinner size="sm" className="me-2" /> : null}
+                              Delete Bank Details
+                            </Button>
+                          )}
+                        </div>
                       </Form>
                     </CardBody>
                   </Card>

@@ -22,6 +22,9 @@ export interface IWallet {
   currency: string
   isActive: boolean
   bankDetails?: IBankDetails
+  razorpayLinkedAccountId?: string
+  razorpayAccountStatus?: 'created' | 'activated' | 'suspended' | 'failed' | 'pending' | ''
+  razorpayProductId?: string
   createdAt: string
   updatedAt: string
 }
@@ -41,6 +44,8 @@ export interface IWalletTransaction {
   serviceType?: 'events' | 'movie_watch' | 'film_trade'
   status: 'pending' | 'completed' | 'failed' | 'cancelled'
   availableAt?: string
+  razorpayTransferId?: string
+  razorpayPaymentId?: string
   metadata?: {
     bookingId?: string
     purchaseId?: string
@@ -171,6 +176,15 @@ export const walletApi = createApi({
       invalidatesTags: ['Wallet'],
     }),
 
+    deleteBankDetails: builder.mutation<IWallet, void>({
+      query: () => ({
+        url: '/wallet/bank-details',
+        method: 'DELETE',
+      }),
+      transformResponse: (response: ApiResponse<IWallet>) => response.data,
+      invalidatesTags: ['Wallet'],
+    }),
+
     // ============ WITHDRAWALS ============
     requestWithdrawal: builder.mutation<IWithdrawalRequest, { amount: number }>({
       query: (data) => ({
@@ -264,6 +278,7 @@ export const {
   useGetWalletStatsQuery,
   useGetWalletTransactionsQuery,
   useUpdateBankDetailsMutation,
+  useDeleteBankDetailsMutation,
   useRequestWithdrawalMutation,
   useGetMyWithdrawalsQuery,
   useCancelWithdrawalMutation,

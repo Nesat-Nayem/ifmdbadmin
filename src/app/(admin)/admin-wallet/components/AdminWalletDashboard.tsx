@@ -406,6 +406,7 @@ const AdminWalletDashboard = () => {
                       <th>Pending Balance</th>
                       <th>Total Earnings</th>
                       <th>Total Withdrawn</th>
+                      <th>Route Status</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -420,6 +421,15 @@ const AdminWalletDashboard = () => {
                         <td className="text-warning">{formatCurrency(wallet.pendingBalance)}</td>
                         <td>{formatCurrency(wallet.totalEarnings)}</td>
                         <td>{formatCurrency(wallet.totalWithdrawn)}</td>
+                        <td>
+                          {(wallet as any).razorpayLinkedAccountId ? (
+                            <Badge bg={(wallet as any).razorpayAccountStatus === 'activated' ? 'success' : 'warning'}>
+                              {(wallet as any).razorpayAccountStatus === 'activated' ? 'Route Active' : 'Route Pending'}
+                            </Badge>
+                          ) : (
+                            <Badge bg="secondary">No Route</Badge>
+                          )}
+                        </td>
                         <td>
                           <Badge bg={wallet.isActive ? 'success' : 'secondary'}>
                             {wallet.isActive ? 'Active' : 'Inactive'}
