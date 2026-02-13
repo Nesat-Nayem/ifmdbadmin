@@ -151,15 +151,10 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
             {/* Poster URL */}
             <Col lg={6}>
               <div className="mb-3">
-                <label className="form-label">Poster URL</label>
-                <Controller
-                  control={control}
-                  name="posterUrl"
-                  render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com/poster.jpg" />}
-                />
+                <label className="form-label">Poster Image</label>
+         
                 {errors?.posterUrl && <p className="text-danger">{errors.posterUrl.message}</p>}
                 <div className="mt-2">
-                  <label className="form-label">Or upload from your device</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -191,14 +186,9 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
             {/* Backdrop URL */}
             <Col lg={6}>
               <div className="mb-3">
-                <label className="form-label">Backdrop URL</label>
-                <Controller
-                  control={control}
-                  name="backdropUrl"
-                  render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com/backdrop.jpg" />}
-                />
+                <label className="form-label">Backdrop Image</label>
+    
                 <div className="mt-2">
-                  <label className="form-label">Or upload from your device</label>
                   <input
                     type="file"
                     accept="image/*"

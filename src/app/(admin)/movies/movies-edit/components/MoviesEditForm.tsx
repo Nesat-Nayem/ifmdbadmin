@@ -430,15 +430,15 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
 
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Poster URL</label>
-                  <Controller
+                  <label className="form-label">Poster Image</label>
+                  {/* <Controller
                     control={control}
                     name="posterUrl"
                     render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com/poster.jpg" />}
-                  />
+                  /> */}
                   {errors.posterUrl && <p className="text-danger">{errors.posterUrl.message}</p>}
                   <div className="mt-2">
-                    <label className="form-label">Or upload from your device</label>
+                    {/* <label className="form-label">Or upload from your device</label> */}
                     <input
                       type="file"
                       accept="image/*"
@@ -474,7 +474,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
 
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Trailer URL</label>
+                  <label className="form-label">Trailer </label>
                   <Controller
                     control={control}
                     name="trailerUrl"
@@ -488,10 +488,8 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
               {/* Backdrop URL */}
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Backdrop URL</label>
-                  <Controller control={control} name="backdropUrl" render={({ field }) => <input {...field} type="url" className="form-control" placeholder="https://example.com/backdrop.jpg" />} />
-                  <div className="mt-2">
-                    <label className="form-label">Or upload from your device</label>
+                  <label className="form-label">Backdrop Image</label>
+          <div className="mt-2">
                     <input
                       type="file"
                       accept="image/*"
