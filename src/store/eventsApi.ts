@@ -56,6 +56,8 @@ export interface IEvents {
   performers: IPerformer[]
   organizers: IOrganizer[]
   tags: string[]
+  videoUrl?: string
+  cloudflareVideoUid?: string
   status: 'upcoming' | 'ongoing' | 'completed' | string
   isActive: boolean
   createdAt: string

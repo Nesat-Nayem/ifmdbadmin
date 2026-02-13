@@ -6,6 +6,7 @@ import { Badge, Card, CardBody, Carousel, CarouselItem, Col, ListGroup, Row, Spi
 import { useParams, useRouter } from 'next/navigation'
 import { useGetEventsByIdQuery } from '@/store/eventsApi'
 
+
 const EventsView = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const { id } = useParams()
@@ -71,21 +72,23 @@ const EventsView = () => {
           </CardBody>
         </Card>
 
-        {/* Trailer */}
-        {/* {event?.trailerUrl && (
+        {/* Trailer Video */}
+        {(event as any)?.videoUrl && (
           <Card className="mt-3">
             <CardBody>
+              <h4 className="text-dark fw-medium mb-3">Event Trailer</h4>
               <div className="ratio ratio-16x9">
                 <iframe
-                  src={event.trailerUrl}
-                  title="YouTube video"
+                  src={(event as any).videoUrl}
+                  title="Event Trailer"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                  style={{ borderRadius: '8px' }}
                 />
               </div>
             </CardBody>
           </Card>
-        )} */}
+        )}
 
         {/* Gallery Images */}
         {event?.galleryImages?.length > 0 && (
@@ -155,6 +158,16 @@ const EventsView = () => {
               <ListGroup.Item className="d-flex justify-content-between">
                 <span>Language</span> <span>{event.eventLanguage || 'English'}</span>
               </ListGroup.Item>
+              {(event as any).homeSection && (
+                <ListGroup.Item className="d-flex justify-content-between">
+                  <span>Home Section</span> <Badge bg="info">{(event as any).homeSection.replace(/_/g, ' ')}</Badge>
+                </ListGroup.Item>
+              )}
+              {(event as any).isGovernmentEvent && (
+                <ListGroup.Item className="d-flex justify-content-between">
+                  <span>Government Event</span> <Badge bg="warning">🏛️ Yes (10% Platform Fee)</Badge>
+                </ListGroup.Item>
+              )}
               <ListGroup.Item className="d-flex justify-content-between">
                 <span>Start Date</span>
                 <span>

@@ -11,6 +11,7 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
+import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 // Seat Type Interface
 interface ILocalSeatType {
@@ -74,6 +75,10 @@ const EventsEdit = () => {
   const [showToast, setShowToast] = useState(false)
   const [posterPreview, setPosterPreview] = useState<string | null>(null)
   
+  // Video state
+  const [videoUrl, setVideoUrl] = useState('')
+  const [cloudflareVideoUid, setCloudflareVideoUid] = useState('')
+
   // Upload loading states
   const [isUploadingPoster, setIsUploadingPoster] = useState(false)
   const [isUploadingGallery, setIsUploadingGallery] = useState(false)
@@ -195,6 +200,14 @@ const EventsEdit = () => {
       if (event.posterImage) {
         setExistingPosterUrl(event.posterImage)
         setPosterPreview(event.posterImage)
+      }
+
+      // Set existing video URL
+      if ((event as any).videoUrl) {
+        setVideoUrl((event as any).videoUrl)
+      }
+      if ((event as any).cloudflareVideoUid) {
+        setCloudflareVideoUid((event as any).cloudflareVideoUid)
       }
 
       // Set existing gallery images
@@ -389,7 +402,7 @@ const EventsEdit = () => {
       // Filter out empty seat types
       const validSeatTypes = seatTypes.filter(st => st.name.trim() !== '' && st.totalSeats > 0)
 
-      const payload = {
+      const payload: any = {
         title: values.title,
         description: values.description,
         eventType: values.eventType,
@@ -425,6 +438,14 @@ const EventsEdit = () => {
         performers: uploadedPerformers,
         organizers: uploadedOrganizers,
         homeSection: values.homeSection || '',
+      }
+
+      // Only include video fields if they have values (prevent accidental wiping)
+      if (videoUrl) {
+        payload.videoUrl = videoUrl
+      }
+      if (cloudflareVideoUid) {
+        payload.cloudflareVideoUid = cloudflareVideoUid
       }
 
       setUploadProgress(90)
@@ -507,7 +528,7 @@ const EventsEdit = () => {
                         width={100} 
                         height={100} 
                         style={{ objectFit: 'cover', borderRadius: '8px' }}
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png' }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
                       />
                     </div>
                   )}
@@ -521,6 +542,28 @@ const EventsEdit = () => {
                     className={`form-control ${errors.title ? 'is-invalid' : ''}`} 
                   />
                   {errors.title && <div className="invalid-feedback">{errors.title.message}</div>}
+                </Col>
+
+                {/* Event Video Upload */}
+                <Col lg={12} className="mt-3">
+                  <Card className="border-2 border-dashed">
+                    <CardBody>
+                      <h6 className="mb-3">🎬 Event Trailer Video (Cloudflare Stream)</h6>
+                      {videoUrl && (
+                        <div className="mb-3 p-2 bg-light rounded">
+                          <small className="text-success">✅ Current video: {videoUrl.substring(0, 60)}...</small>
+                        </div>
+                      )}
+                      <CloudflareVideoUploader
+                        onUploadComplete={(uid: string, url: string) => {
+                          setVideoUrl(url)
+                          setCloudflareVideoUid(uid)
+                        }}
+                        uploadType="trailer"
+                        existingUid={cloudflareVideoUid}
+                      />
+                    </CardBody>
+                  </Card>
                 </Col>
 
                 <Col lg={12} className="mt-3">
@@ -864,7 +907,7 @@ const EventsEdit = () => {
                             alt={`gallery-${index}`}
                             className="img-fluid rounded"
                             style={{ height: '120px', objectFit: 'cover', width: '100%' }}
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png' }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
                           />
                           <button
                             type="button"
@@ -948,7 +991,7 @@ const EventsEdit = () => {
                           width={60}
                           height={60}
                           style={{ objectFit: 'cover', borderRadius: '50%' }}
-                          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png' }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
                         />
                       </div>
                     )}
@@ -1041,7 +1084,7 @@ const EventsEdit = () => {
                           width={60}
                           height={60}
                           style={{ objectFit: 'cover', borderRadius: '8px' }}
-                          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png' }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
                         />
                       </div>
                     )}
