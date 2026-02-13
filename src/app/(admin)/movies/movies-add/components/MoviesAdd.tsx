@@ -1574,8 +1574,8 @@ const MoviesAdd = () => {
           phone: data.phone,
           email: data.email,
         },
-        cast: (data.cast || []).map((c: any) => ({ name: c.name, type: c.type, image: c.image })),
-        crew: (data.crew || []).map((c: any) => ({ name: c.name, designation: c.designation, image: c.image })),
+        cast: (data.cast || []).filter((c: any) => c.name?.trim()).map((c: any) => ({ name: c.name, type: c.type || '', image: c.image || '' })),
+        crew: (data.crew || []).filter((c: any) => c.name?.trim()).map((c: any) => ({ name: c.name, designation: c.designation || '', image: c.image || '' })),
         homeSection: data.homeSection || '',
         tradeStatus: data.tradeStatus || 'get_it_now',
         countryPricing: (data.countryPricing || []).filter((p: any) => p.countryCode).map((p: any) => ({
@@ -1602,7 +1602,11 @@ const MoviesAdd = () => {
       router.push('/movies/movies-list') // navigate if needed
     } catch (err: any) {
       console.error('❌ Error submitting movie:', err)
-      showMessage(err?.data?.message || 'Failed to create movie', 'error')
+      let msg = err?.data?.message || 'Failed to create movie'
+      if (Array.isArray(err?.data?.errors) && err.data.errors.length > 0) {
+        msg = err.data.errors.map((e: any) => e.message || e.path).join(', ')
+      }
+      showMessage(msg, 'error')
     }
   }
 

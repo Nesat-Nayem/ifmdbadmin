@@ -396,7 +396,11 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       setShowToast(true)
     } catch (err: any) {
       console.error(err)
-      setToastMessage(err?.data?.message || 'Failed to update movie')
+      let msg = err?.data?.message || 'Failed to update movie'
+      if (Array.isArray(err?.data?.errors) && err.data.errors.length > 0) {
+        msg = err.data.errors.map((e: any) => e.message || e.path).join(', ')
+      }
+      setToastMessage(msg)
       setToastVariant('error')
       setShowToast(true)
     }
