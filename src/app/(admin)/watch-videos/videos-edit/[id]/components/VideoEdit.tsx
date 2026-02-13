@@ -423,12 +423,22 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
         cast,
         crew,
         seasons: videoType === 'series' ? seasons : [],
-        thumbnailUrl: thumbnailUrl || video?.thumbnailUrl,
-        posterUrl: posterUrl || video?.posterUrl,
-        videoUrl: videoUrl || video?.videoUrl,
-        trailerUrl: trailerUrl || video?.trailerUrl,
         homeSection: values.homeSection || '',
       }
+
+      // Only include media fields if they have actual values
+      // This prevents accidentally wiping URLs when the API didn't return them (security stripping)
+      const finalThumbnailUrl = thumbnailUrl || video?.thumbnailUrl
+      if (finalThumbnailUrl) updateData.thumbnailUrl = finalThumbnailUrl
+
+      const finalPosterUrl = posterUrl || video?.posterUrl
+      if (finalPosterUrl) updateData.posterUrl = finalPosterUrl
+
+      const finalVideoUrl = videoUrl || video?.videoUrl
+      if (finalVideoUrl) updateData.videoUrl = finalVideoUrl
+
+      const finalTrailerUrl = trailerUrl || video?.trailerUrl
+      if (finalTrailerUrl) updateData.trailerUrl = finalTrailerUrl
 
       console.log('Updating video with data:', updateData)
       await updateVideo({ id: videoId, data: updateData }).unwrap()
