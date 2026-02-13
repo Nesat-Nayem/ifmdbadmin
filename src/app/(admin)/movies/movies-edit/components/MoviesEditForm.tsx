@@ -8,6 +8,7 @@ import * as yup from 'yup'
 import { useGetMoviesByIdQuery, useUpdateMovieJsonMutation } from '@/store/moviesApi'
 import { useGetMovieCategoriesQuery } from '@/store/movieCategory'
 import { useUploadSingleMutation } from '@/store/uploadApi'
+import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 type Props = { id: string }
 
@@ -95,6 +96,10 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
+
+  // Trailer video state
+  const [trailerUrl, setTrailerUrl] = useState('')
+  const [cloudflareTrailerUid, setCloudflareTrailerUid] = useState('')
 
   // Simple cast/crew admin arrays
   const [cast, setCast] = useState<Array<{ name: string; type?: string; image?: string }>>([{ name: '', type: '', image: '' }])
@@ -303,6 +308,10 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
       setCrew(((movie as any).crew || []).map((c: any) => ({ name: c.name || '', designation: c.designation || '', image: c.image || '' })) || [
         { name: '', designation: '', image: '' },
       ])
+
+      // Prefill trailer video
+      if (movie.trailerUrl) setTrailerUrl(movie.trailerUrl)
+      if ((movie as any).cloudflareTrailerUid) setCloudflareTrailerUid((movie as any).cloudflareTrailerUid)
       
       // Prefill country pricing
       const existingPricing = (movie as any).countryPricing || []
@@ -332,7 +341,6 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
         rating: values.rating,
         imdbRating: Number(values.imdbRating),
         rottenTomatoesRating: values.rottenTomatoesRating,
-        trailerUrl: values.trailerUrl,
         description: values.description,
         status: values.status,
         posterUrl: values.posterUrl,
@@ -357,6 +365,13 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
         state: values.state,
         phone: values.phone,
         email: values.email,
+      }
+      // Only include trailer fields if they have values (prevent accidental wiping)
+      if (trailerUrl) {
+        payload.trailerUrl = trailerUrl
+      }
+      if (cloudflareTrailerUid) {
+        payload.cloudflareTrailerUid = cloudflareTrailerUid
       }
       if (values.formats && values.formats.length) {
         payload.formats = values.formats
@@ -474,14 +489,25 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
 
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Trailer </label>
-                  <Controller
-                    control={control}
-                    name="trailerUrl"
-                    render={({ field }) => (
-                      <input {...field} type="url" className="form-control" placeholder='e.g. "https://www.youtube.com' />
-                    )}
-                  />
+                  <label className="form-label">Trailer Video (Cloudflare Stream)</label>
+                  <Card className="border-2 border-dashed mt-1">
+                    <CardBody>
+                      {trailerUrl && (
+                        <div className="mb-3 p-2 bg-light rounded">
+                          <small className="text-success">✅ Current trailer: {trailerUrl.substring(0, 60)}...</small>
+                        </div>
+                      )}
+                      <CloudflareVideoUploader
+                        onUploadComplete={(uid: string, url: string) => {
+                          setTrailerUrl(url)
+                          setCloudflareTrailerUid(uid)
+                          setValue('trailerUrl', url, { shouldValidate: true })
+                        }}
+                        uploadType="trailer"
+                        existingUid={cloudflareTrailerUid}
+                      />
+                    </CardBody>
+                  </Card>
                 </div>
               </Col>
 
@@ -677,33 +703,40 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
                     name="formats"
                     render={({ field }) => {
                       const formatOptions = [
-                        { value: '2D', label: '2D' },
-                        { value: '3D', label: '3D' },
-                        { value: 'IMAX', label: 'IMAX' },
-                        { value: 'IMAX 3D', label: 'IMAX 3D' },
-                        { value: '4DX', label: '4DX' },
-                        { value: 'Dolby Atmos', label: 'Dolby Atmos' },
-                        { value: 'Dolby Cinema', label: 'Dolby Cinema' },
-                        { value: 'ScreenX', label: 'ScreenX' },
-                        { value: 'D-BOX', label: 'D-BOX' },
-                        { value: 'HDR', label: 'HDR' },
+                        { value: '2d', label: '2D' },
+                        { value: '3d', label: '3D' },
+                        { value: 'imax', label: 'IMAX' },
+                        { value: 'imax_3d', label: 'IMAX 3D' },
+                        { value: 'imax_4d', label: 'IMAX 4D' },
+                        { value: 'imax_5d', label: 'IMAX 5D' },
+                        { value: '4dx', label: '4DX' },
+                        { value: 'dolby_atmos', label: 'Dolby Atmos' },
+                        { value: 'dolby_cinema', label: 'Dolby Cinema' },
+                        { value: 'screenx', label: 'ScreenX' },
+                        { value: 'd_box', label: 'D-BOX' },
+                        { value: 'hdr', label: 'HDR' },
+                        { value: 'uhd', label: 'UHD' },
+                        { value: 'virtual_reality', label: 'Virtual Reality (VR)' },
+                        { value: 'hfr', label: 'High Frame Rate (HFR)' },
+                        { value: 'laser', label: 'Laser Projection' },
                       ]
                       const toggleFormat = (val: string) => {
-                        const current = field.value || []
+                        const current = (field.value || []).map((v: string) => v.toLowerCase())
                         if (current.includes(val)) {
                           field.onChange(current.filter((v: string) => v !== val))
                         } else {
                           field.onChange([...current, val])
                         }
                       }
+                      const currentLower = (field.value || []).map((v: string) => v.toLowerCase())
                       return (
                         <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
                           {formatOptions.map((opt) => (
                             <div
                               key={opt.value}
                               onClick={() => toggleFormat(opt.value)}
-                              className={`px-3 py-2 rounded-pill border cursor-pointer ${
-                                (field.value || []).includes(opt.value)
+                              className={`px-3 py-2 rounded-pill border ${
+                                currentLower.includes(opt.value)
                                   ? 'bg-primary text-white border-primary'
                                   : 'bg-white text-dark border-secondary'
                               }`}

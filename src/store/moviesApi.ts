@@ -59,6 +59,7 @@ export interface IMovies {
   posterUrl: string
   backdropUrl: string
   trailerUrl: string
+  cloudflareTrailerUid?: string
   galleryImages: string[]
   budget: number
   boxOffice: number

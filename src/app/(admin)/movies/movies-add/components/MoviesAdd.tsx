@@ -459,31 +459,52 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
                 <Controller
                   control={control}
                   name="formats"
-                  render={({ field }) => (
-                    <select
-                      {...field}
-                      multiple
-                      className="form-control form-select"
-                      onChange={(e) => field.onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))}
-                    >
-                      <option value="2d">2D</option>
-                      <option value="3d">3D</option>
-                      <option value="imax">IMAX</option>
-                      <option value="imax_3d">IMAX 3D</option>
-                      <option value="imax_4d">IMAX 4D</option>
-                      <option value="imax_5d">IMAX 5D</option>
-                      <option value="4dx">4DX</option>
-                      <option value="dolby_atmos">Dolby Atmos</option>
-                      <option value="dolby_cinema">Dolby Cinema</option>
-                      <option value="screenx">ScreenX</option>
-                      <option value="d_box">D-BOX</option>
-                      <option value="hdr">HDR</option>
-                      <option value="uhd">UHD</option>
-                      <option value="virtual_reality">Virtual Reality (VR)</option>
-                      <option value="hfr">High Frame Rate (HFR)</option>
-                      <option value="laser">Laser Projection</option>
-                    </select>
-                  )}
+                  render={({ field }) => {
+                    const formatOptions = [
+                      { value: '2d', label: '2D' },
+                      { value: '3d', label: '3D' },
+                      { value: 'imax', label: 'IMAX' },
+                      { value: 'imax_3d', label: 'IMAX 3D' },
+                      { value: 'imax_4d', label: 'IMAX 4D' },
+                      { value: 'imax_5d', label: 'IMAX 5D' },
+                      { value: '4dx', label: '4DX' },
+                      { value: 'dolby_atmos', label: 'Dolby Atmos' },
+                      { value: 'dolby_cinema', label: 'Dolby Cinema' },
+                      { value: 'screenx', label: 'ScreenX' },
+                      { value: 'd_box', label: 'D-BOX' },
+                      { value: 'hdr', label: 'HDR' },
+                      { value: 'uhd', label: 'UHD' },
+                      { value: 'virtual_reality', label: 'Virtual Reality (VR)' },
+                      { value: 'hfr', label: 'High Frame Rate (HFR)' },
+                      { value: 'laser', label: 'Laser Projection' },
+                    ]
+                    const toggleFormat = (val: string) => {
+                      const current = field.value || []
+                      if (current.includes(val)) {
+                        field.onChange(current.filter((v: string) => v !== val))
+                      } else {
+                        field.onChange([...current, val])
+                      }
+                    }
+                    return (
+                      <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
+                        {formatOptions.map((opt) => (
+                          <div
+                            key={opt.value}
+                            onClick={() => toggleFormat(opt.value)}
+                            className={`px-3 py-2 rounded-pill border ${
+                              (field.value || []).includes(opt.value)
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white text-dark border-secondary'
+                            }`}
+                            style={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }}
                 />
               </div>
             </Col>
@@ -687,30 +708,40 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
                 <Controller
                   control={control}
                   name="genres"
-                  render={({ field }) => (
-                    <select
-                      {...field}
-                      multiple
-                      className="form-control form-select"
-                      onChange={(e) => field.onChange(Array.from(e.target.selectedOptions, (opt) => opt.value))}
-                    >
-                      <option value="action">Action</option>
-                      <option value="comedy">Comedy</option>
-                      <option value="drama">Drama</option>
-                      <option value="thriller">Thriller</option>
-                      <option value="horror">Horror</option>
-                      <option value="romance">Romance</option>
-                      <option value="sci-fi">Sci-Fi</option>
-                      <option value="fantasy">Fantasy</option>
-                      <option value="documentary">Documentary</option>
-                      <option value="animation">Animation</option>
-                      <option value="musical">Musical</option>
-                      <option value="biography">Biography</option>
-                      <option value="adventure">Adventure</option>
-                      <option value="crime">Crime</option>
-                      <option value="family">Family</option>
-                    </select>
-                  )}
+                  render={({ field }) => {
+                    const genreOptions = [
+                      'Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Romance',
+                      'Sci-Fi', 'Fantasy', 'Documentary', 'Animation', 'Musical',
+                      'Biography', 'Adventure', 'Crime', 'Family'
+                    ]
+                    const toggleGenre = (val: string) => {
+                      const lowerVal = val.toLowerCase()
+                      const current = field.value || []
+                      if (current.includes(lowerVal)) {
+                        field.onChange(current.filter((v: string) => v !== lowerVal))
+                      } else {
+                        field.onChange([...current, lowerVal])
+                      }
+                    }
+                    return (
+                      <div className="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
+                        {genreOptions.map((genre) => (
+                          <div
+                            key={genre}
+                            onClick={() => toggleGenre(genre)}
+                            className={`px-3 py-2 rounded-pill border ${
+                              (field.value || []).includes(genre.toLowerCase())
+                                ? 'bg-success text-white border-success'
+                                : 'bg-white text-dark border-secondary'
+                            }`}
+                            style={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}
+                          >
+                            {genre}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }}
                 />
               </div>
             </Col>
