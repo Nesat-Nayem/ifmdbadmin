@@ -565,6 +565,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     key: 'settings-title',
     label: 'Settings',
     isTitle: true,
+      allowedRoles: ['admin'],
   },
   {
     key: 'settings',
@@ -572,5 +573,6 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'solar:settings-bold-duotone',
     url: '/settings',
     parentKey: 'settings-title',
+      allowedRoles: ['admin'],
   },
 ]
