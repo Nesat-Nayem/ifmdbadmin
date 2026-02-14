@@ -91,7 +91,7 @@ interface ApiResponse<T> {
 export const sectionSettingsApi = createApi({
   reducerPath: 'sectionSettingsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.moviemart.orgv1/api',
+    baseUrl: 'https://api.moviemart.org/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth.token
       if (token) {

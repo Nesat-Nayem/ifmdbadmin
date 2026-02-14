@@ -17,7 +17,7 @@ interface AboutUsResponse {
 export const aboutUsApi = createApi({
   reducerPath: 'aboutUsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.moviemart.orgv1/api',
+    baseUrl: 'https://api.moviemart.org/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth?.token
       if (token) {
