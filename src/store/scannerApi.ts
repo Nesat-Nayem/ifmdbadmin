@@ -87,7 +87,7 @@ interface UpdateScannerInput {
 export const scannerApi = createApi({
   reducerPath: 'scannerApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://api.moviemart.org/v1/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://api.moviemart.orgv1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth?.token
       if (token) {

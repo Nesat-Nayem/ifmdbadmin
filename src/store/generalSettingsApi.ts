@@ -28,7 +28,7 @@ interface GeneralSettingsResponse {
 export const generalSettingsApi = createApi({
   reducerPath: 'generalSettingsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://api.moviemart.org/v1/api',
+    baseUrl: 'https://api.moviemart.orgv1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth?.token
       if (token) {
