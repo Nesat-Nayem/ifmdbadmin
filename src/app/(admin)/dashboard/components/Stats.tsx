@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { Card, CardBody, CardFooter, CardTitle, Col, Row } from 'react-bootstrap'
 
 const StatsCard = () => {
-  const { data: movieData } = useGetMoviesQuery()
+  const { data: movieData } = useGetMoviesQuery({})
   const { data: eventdata } = useGetEventsQuery()
   const { data: advertiseData } = useGetAdvertiseQuery()
   const { data: enqueryData } = useGetEnquiryQuery()
@@ -25,7 +25,7 @@ const StatsCard = () => {
               </Col>
               <Col xs={6} className="text-end">
                 <p className="text-muted mb-0 text-truncate">Total Movies</p>
-                <h3 className="text-dark mt-1 mb-0">{movieData?.length}</h3>
+                <h3 className="text-dark mt-1 mb-0">{movieData?.data?.length}</h3>
               </Col>
             </Row>
           </CardBody>
