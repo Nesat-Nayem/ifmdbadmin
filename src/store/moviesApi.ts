@@ -87,11 +87,30 @@ export interface IMovies {
   updatedAt: string
 }
 
+interface MoviesMeta {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
 interface MoviesResponse {
   success: boolean
   statusCode: number
   message: string
   data: IMovies | IMovies[]
+  meta?: MoviesMeta
+}
+
+export interface MoviesListResponse {
+  data: IMovies[]
+  meta: MoviesMeta
+}
+
+export interface GetMoviesParams {
+  page?: number
+  limit?: number
+  search?: string
 }
 
 export const moviesApi = createApi({
@@ -108,9 +127,15 @@ export const moviesApi = createApi({
   }),
   tagTypes: ['Movies'],
   endpoints: (builder) => ({
-    getMovies: builder.query<IMovies[], void>({
-      query: () => '/movies',
-      transformResponse: (response: MoviesResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
+    getMovies: builder.query<MoviesListResponse, GetMoviesParams>({
+      query: ({ page = 1, limit = 10, search } = {}) => ({
+        url: '/movies',
+        params: { page, limit, ...(search ? { search } : {}) },
+      }),
+      transformResponse: (response: MoviesResponse) => ({
+        data: Array.isArray(response.data) ? response.data : [response.data],
+        meta: response.meta ?? { page: 1, limit: 10, total: 0, totalPages: 1 },
+      }),
       providesTags: ['Movies'],
     }),
 

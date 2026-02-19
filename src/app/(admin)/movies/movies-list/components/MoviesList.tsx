@@ -3,49 +3,45 @@
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardFooter, CardHeader, CardTitle, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap'
 import { useDeleteMovieMutation, useGetMoviesQuery } from '@/store/moviesApi'
 
 const MoviesList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
   // ✅ Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
 
-  const { data: moviesData = [], isLoading, isError } = useGetMoviesQuery()
+  // ✅ Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
-  console.log(moviesData)
-  // ✅ Correct destructuring
+  const { data, isLoading, isError } = useGetMoviesQuery({ page: currentPage, limit: 10, search: debouncedSearch || undefined })
+
+  const currentItems = data?.data ?? []
+  const totalPages = data?.meta?.totalPages ?? 1
+
   const [deleteMovie, { isLoading: isDeleting }] = useDeleteMovieMutation()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  // ✅ filter movies by title or genre or language
-  const filteredMovies = useMemo(
-    () =>
-      moviesData.filter((movie: any) =>
-        [movie.title, ...(movie.genres || []), ...(movie.languages || [])]
-          .join(' ')
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
-      ),
-    [moviesData, searchTerm],
-  )
-
-  // ✅ pagination
-  const itemsPerPage = 10
-  const totalPages = Math.ceil(filteredMovies.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentItems = filteredMovies.slice(startIndex, startIndex + itemsPerPage)
 
   // ✅ page change handler
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
     }
+  }
+
+  // ✅ Reset to page 1 on search change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
   }
 
   // ✅ Toast trigger
@@ -85,10 +81,7 @@ const MoviesList = () => {
                   type="text"
                   placeholder="Search..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setCurrentPage(1) // reset to page 1 when searching
-                  }}
+                  onChange={handleSearchChange}
                   className="form-control form-control-sm"
                   style={{ maxWidth: 200 }}
                 />
@@ -136,7 +129,7 @@ const MoviesList = () => {
                       </td>
                     </tr>
                   )}
-                  {!isLoading && !isError && filteredMovies.length === 0 && (
+                  {!isLoading && !isError && currentItems.length === 0 && (
                     <tr>
                       <td colSpan={9} className="text-center py-4">
                         No movies found
