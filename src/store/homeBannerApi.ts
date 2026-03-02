@@ -1,13 +1,31 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { RootState as IRootState } from '@/store'
 
+export type BannerType = 'home' | 'film_mart' | 'events' | 'watch_movies'
+export type BannerPlatform = 'web' | 'mobile' | 'both'
+
+export const BANNER_TYPE_LABELS: Record<BannerType, string> = {
+  home: 'Home',
+  film_mart: 'Film Mart',
+  events: 'Events',
+  watch_movies: 'Watch Movies',
+}
+
+export const BANNER_TYPE_IMAGE_SIZES: Record<BannerType, { web: string; mobile: string }> = {
+  home: { web: '1920 × 600 px', mobile: '1080 × 400 px' },
+  film_mart: { web: '1920 × 400 px', mobile: '1080 × 360 px' },
+  events: { web: '1920 × 400 px', mobile: '1080 × 360 px' },
+  watch_movies: { web: '1920 × 400 px', mobile: '1080 × 360 px' },
+}
+
 export interface IHomeBanner {
   _id: string
   title?: string
   order?: number
   image: string
+  bannerType: BannerType
+  platform: BannerPlatform
   isActive: boolean
-  status: 'active' | 'inactive' | string
   createdAt: string
   updatedAt: string
 }
@@ -22,11 +40,11 @@ interface HomeBannerResponse {
 export const homeBannerApi = createApi({
   reducerPath: 'homeBannerApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.moviemart.org/v1/api',
+    baseUrl: 'http://localhost:8080/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth.token
       if (token) {
-        headers.set('Authorization', `Bearer ${token}`) // add space after Bearer
+        headers.set('Authorization', `Bearer ${token}`)
       }
       return headers
     },

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
 import { Card, CardFooter, CardHeader, CardTitle, Col, Row, Toast, ToastContainer } from 'react-bootstrap'
-import { useDeleteHomeBannerMutation, useGetHomeBannerQuery, IHomeBanner } from '@/store/homeBannerApi'
+import { useDeleteHomeBannerMutation, useGetHomeBannerQuery, IHomeBanner, BANNER_TYPE_LABELS, BannerType } from '@/store/homeBannerApi'
 
 const HomeBanner = () => {
   const [currentPage, setCurrentPage] = useState(1)
@@ -98,6 +98,8 @@ const HomeBanner = () => {
                     </th>
                     <th>Banner</th>
                     <th>Title</th>
+                    <th>Page</th>
+                    <th>Platform</th>
                     <th>Order</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -126,6 +128,20 @@ const HomeBanner = () => {
                         </div>
                       </td>
                       <td>{banner.title}</td>
+                      <td>
+                        <span className="badge bg-primary">
+                          {BANNER_TYPE_LABELS[banner.bannerType as BannerType] ?? banner.bannerType}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${
+                          banner.platform === 'web' ? 'bg-info' :
+                          banner.platform === 'mobile' ? 'bg-warning text-dark' :
+                          'bg-secondary'
+                        }`}>
+                          {banner.platform === 'web' ? 'Web' : banner.platform === 'mobile' ? 'Mobile' : 'Both'}
+                        </span>
+                      </td>
                       <td>{banner.order}</td>
                       <td>
                         <span className={`badge ${banner.isActive === true ? 'bg-success' : 'bg-danger'}`}>
@@ -152,7 +168,7 @@ const HomeBanner = () => {
 
                   {currentItems.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="text-center">
+                      <td colSpan={10} className="text-center">
                         No Banner found
                       </td>
                     </tr>

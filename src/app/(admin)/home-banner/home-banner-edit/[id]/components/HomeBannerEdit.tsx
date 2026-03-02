@@ -5,15 +5,16 @@ import React, { useEffect, useState } from 'react'
 import * as yup from 'yup'
 import { Button, Card, CardBody, CardHeader, CardTitle, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap'
 import { Control, Controller, useForm } from 'react-hook-form'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useGetHomeBannerByIdQuery, useUpdateHomeBannerMutation } from '@/store/homeBannerApi'
+import { useGetHomeBannerByIdQuery, useUpdateHomeBannerMutation, BannerType, BannerPlatform, BANNER_TYPE_LABELS, BANNER_TYPE_IMAGE_SIZES } from '@/store/homeBannerApi'
 import Image from 'next/image'
 
 type FormValues = {
   title: string
+  bannerType: BannerType
+  platform: BannerPlatform
   order?: number
-  status: string
+  isActive: boolean
   image?: File
 }
 
@@ -22,107 +23,178 @@ type ControlType = {
   imagePreview: string | null
   setImagePreview: React.Dispatch<React.SetStateAction<string | null>>
   banner?: any
+  watchBannerType: BannerType
+  watchPlatform: BannerPlatform
 }
 
-const GeneralInformationCard = ({ control, imagePreview, setImagePreview, banner }: ControlType) => (
-  <Card>
-    <CardHeader>
-      <CardTitle as="h4">Edit Home Banner</CardTitle>
-    </CardHeader>
-    <CardBody>
-      <Row>
-        {/* Title */}
-        <Col lg={6}>
-          <div className="mb-3">
-            <label className="form-label">Title</label>
-            <Controller
-              control={control}
-              name="title"
-              render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter Title" />}
-            />
-          </div>
-        </Col>
+const GeneralInformationCard = ({ control, imagePreview, setImagePreview, banner, watchBannerType, watchPlatform }: ControlType) => {
+  const imageSizeHint =
+    watchBannerType && watchPlatform && watchPlatform !== 'both'
+      ? BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.[watchPlatform as 'web' | 'mobile']
+      : watchBannerType
+        ? `Web: ${BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.web} / Mobile: ${BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.mobile}`
+        : null
 
-        {/* Banner Image */}
-        <Col lg={6}>
-          <div className="mb-3">
-            <label className="form-label">Banner</label>
-            <Controller
-              control={control}
-              name="image"
-              render={({ field }) => (
-                <>
-                  <input
-                    type="file"
-                    className="form-control"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      field.onChange(file)
-                      if (file) setImagePreview(URL.createObjectURL(file))
-                    }}
-                  />
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle as="h4">Edit Banner</CardTitle>
+      </CardHeader>
+      <CardBody>
+        <Row>
+          {/* Banner Type */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Banner Page <span className="text-danger">*</span></label>
+              <Controller
+                control={control}
+                name="bannerType"
+                render={({ field, fieldState }) => (
+                  <>
+                    <select {...field} className={`form-control form-select ${fieldState.error ? 'is-invalid' : ''}`}>
+                      <option value="">Select Page</option>
+                      {(Object.keys(BANNER_TYPE_LABELS) as BannerType[]).map((type) => (
+                        <option key={type} value={type}>{BANNER_TYPE_LABELS[type]}</option>
+                      ))}
+                    </select>
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
 
-                  {/* Show Preview */}
-                  {imagePreview ? (
-                    <div className="mt-2">
-                      <Image
-                        width={50}
-                        height={50}
-                        src={imagePreview}
-                        alt="preview"
-                        style={{ maxHeight: 150, borderRadius: 8, width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ) : banner?.image ? (
-                    <div className="mt-2">
-                      <Image
-                        src={banner.image}
-                        width={100}
-                        height={100}
-                        alt="banner"
-                        style={{ maxHeight: 150, borderRadius: 8, width: '50px', height: '50px', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ) : null}
-                </>
-              )}
-            />
-          </div>
-        </Col>
+          {/* Platform */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Platform <span className="text-danger">*</span></label>
+              <Controller
+                control={control}
+                name="platform"
+                render={({ field, fieldState }) => (
+                  <>
+                    <select {...field} className={`form-control form-select ${fieldState.error ? 'is-invalid' : ''}`}>
+                      <option value="">Select Platform</option>
+                      <option value="web">Web (Next.js)</option>
+                      <option value="mobile">Mobile (Flutter)</option>
+                      <option value="both">Both</option>
+                    </select>
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
 
-        {/* Order */}
-        <Col lg={6}>
-          <div className="mb-3">
-            <label className="form-label">Order</label>
-            <Controller
-              control={control}
-              name="order"
-              render={({ field }) => <input {...field} type="number" className="form-control" placeholder="Enter order" />}
-            />
-          </div>
-        </Col>
+          {/* Title */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Title <span className="text-danger">*</span></label>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field, fieldState }) => (
+                  <>
+                    <input {...field} type="text" className={`form-control ${fieldState.error ? 'is-invalid' : ''}`} placeholder="Enter Title" />
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
 
-        {/* Status */}
-        <Col lg={6}>
-          <div className="mb-3">
-            <label className="form-label">Status</label>
-            <Controller
-              control={control}
-              name="status"
-              render={({ field }) => (
-                <select {...field} className="form-control form-select">
-                  <option value="">Select Status</option>
-                  <option value="Active">Active</option>
-                  <option value="InActive">InActive</option>
-                </select>
-              )}
-            />
-          </div>
-        </Col>
-      </Row>
-    </CardBody>
-  </Card>
-)
+          {/* Banner Image */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">
+                Banner Image
+                {imageSizeHint && (
+                  <span className="ms-2 text-muted fw-normal" style={{ fontSize: '0.78rem' }}>
+                    Recommended: {imageSizeHint}
+                  </span>
+                )}
+              </label>
+              <Controller
+                control={control}
+                name="image"
+                render={({ field }) => (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="form-control"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        field.onChange(file)
+                        if (file) setImagePreview(URL.createObjectURL(file))
+                      }}
+                    />
+
+                    {/* Show Preview */}
+                    {imagePreview ? (
+                      <div className="mt-2">
+                        <Image
+                          width={50}
+                          height={50}
+                          src={imagePreview}
+                          alt="preview"
+                          style={{ maxHeight: 150, borderRadius: 8, width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ) : banner?.image ? (
+                      <div className="mt-2">
+                        <Image
+                          src={banner.image}
+                          width={100}
+                          height={100}
+                          alt="banner"
+                          style={{ maxHeight: 150, borderRadius: 8, width: '50px', height: '50px', objectFit: 'cover' }}
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
+
+          {/* Order */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Order <span className="text-muted fw-normal" style={{ fontSize: '0.78rem' }}>(lower = first)</span></label>
+              <Controller
+                control={control}
+                name="order"
+                render={({ field }) => <input {...field} type="number" className="form-control" placeholder="Enter order" />}
+              />
+            </div>
+          </Col>
+
+          {/* Status */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Status</label>
+              <Controller
+                control={control}
+                name="isActive"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className="form-control form-select"
+                    onChange={(e) => field.onChange(e.target.value === 'true')}
+                    value={field.value === true ? 'true' : 'false'}>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                )}
+              />
+            </div>
+          </Col>
+        </Row>
+      </CardBody>
+    </Card>
+  )
+}
 
 const HomeBannerEdit = () => {
   // ✅ Toast state
@@ -136,32 +208,39 @@ const HomeBannerEdit = () => {
   const bannerId = typeof params?.id === 'string' ? params.id : undefined
   const { data: banner, isFetching, isError } = useGetHomeBannerByIdQuery(bannerId!, { skip: !bannerId })
 
-  console.log(banner)
   const [updateHomeBanner, { isLoading }] = useUpdateHomeBannerMutation()
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const messageSchema = yup.object({
     title: yup.string().required('Please enter title'),
-    status: yup.string().required('Please select status'),
+    bannerType: yup.string().required('Please select a banner page'),
+    platform: yup.string().required('Please select a platform'),
   })
 
-  const { reset, handleSubmit, control } = useForm<FormValues>({
-    resolver: yupResolver(messageSchema),
+  const { reset, handleSubmit, control, watch } = useForm<FormValues>({
+    resolver: yupResolver(messageSchema) as any,
     defaultValues: {
       title: '',
+      bannerType: 'home',
+      platform: 'both',
       order: undefined,
-      status: '',
+      isActive: true,
       image: undefined,
     },
   })
+
+  const watchBannerType = watch('bannerType')
+  const watchPlatform = watch('platform')
 
   // populate form when banner data arrives
   useEffect(() => {
     if (banner) {
       reset({
-        title: banner.title,
+        title: banner.title ?? '',
+        bannerType: banner.bannerType ?? 'home',
+        platform: banner.platform ?? 'both',
         order: banner.order,
-        status: banner.status,
+        isActive: banner.isActive ?? true,
         image: undefined,
       })
       setImagePreview(null)
@@ -180,7 +259,9 @@ const HomeBannerEdit = () => {
 
     const formData = new FormData()
     formData.append('title', values.title)
-    formData.append('status', values.status)
+    formData.append('bannerType', values.bannerType)
+    formData.append('platform', values.platform)
+    formData.append('isActive', String(values.isActive))
     if (values.order !== undefined) formData.append('order', values.order.toString())
     if (values.image) formData.append('image', values.image)
 
@@ -208,7 +289,14 @@ const HomeBannerEdit = () => {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <GeneralInformationCard control={control} imagePreview={imagePreview} setImagePreview={setImagePreview} banner={banner} />
+        <GeneralInformationCard
+          control={control}
+          imagePreview={imagePreview}
+          setImagePreview={setImagePreview}
+          banner={banner}
+          watchBannerType={watchBannerType}
+          watchPlatform={watchPlatform}
+        />
 
         <div className="p-3 bg-light mb-3 rounded">
           <Row className="justify-content-end g-2">

@@ -4,31 +4,88 @@ import React, { useState } from 'react'
 import * as yup from 'yup'
 import { Button, Card, CardBody, CardHeader, CardTitle, Col, Row, Toast, ToastContainer } from 'react-bootstrap'
 import { Control, Controller, useForm } from 'react-hook-form'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCreateHomeBannerMutation } from '@/store/homeBannerApi'
+import { useCreateHomeBannerMutation, BannerType, BannerPlatform, BANNER_TYPE_LABELS, BANNER_TYPE_IMAGE_SIZES } from '@/store/homeBannerApi'
 
 type GeneralInformationCardProps = {
   control: Control<any>
   setImage: React.Dispatch<React.SetStateAction<File | null>>
+  watchBannerType: BannerType
+  watchPlatform: BannerPlatform
 }
 
-const GeneralInformationCard = ({ control, setImage }: GeneralInformationCardProps) => {
+const GeneralInformationCard = ({ control, setImage, watchBannerType, watchPlatform }: GeneralInformationCardProps) => {
+  const imageSizeHint =
+    watchBannerType && watchPlatform && watchPlatform !== 'both'
+      ? BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.[watchPlatform as 'web' | 'mobile']
+      : watchBannerType
+        ? `Web: ${BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.web} / Mobile: ${BANNER_TYPE_IMAGE_SIZES[watchBannerType]?.mobile}`
+        : null
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle as={'h4'}>Add Home Banner</CardTitle>
+        <CardTitle as={'h4'}>Add Banner</CardTitle>
       </CardHeader>
       <CardBody>
         <Row>
+          {/* Banner Type */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Banner Page <span className="text-danger">*</span></label>
+              <Controller
+                control={control}
+                name="bannerType"
+                render={({ field, fieldState }) => (
+                  <>
+                    <select {...field} className={`form-control form-select ${fieldState.error ? 'is-invalid' : ''}`}>
+                      <option value="">Select Page</option>
+                      {(Object.keys(BANNER_TYPE_LABELS) as BannerType[]).map((type) => (
+                        <option key={type} value={type}>{BANNER_TYPE_LABELS[type]}</option>
+                      ))}
+                    </select>
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
+
+          {/* Platform */}
+          <Col lg={6}>
+            <div className="mb-3">
+              <label className="form-label">Platform <span className="text-danger">*</span></label>
+              <Controller
+                control={control}
+                name="platform"
+                render={({ field, fieldState }) => (
+                  <>
+                    <select {...field} className={`form-control form-select ${fieldState.error ? 'is-invalid' : ''}`}>
+                      <option value="">Select Platform</option>
+                      <option value="web">Web (Next.js)</option>
+                      <option value="mobile">Mobile (Flutter)</option>
+                      <option value="both">Both</option>
+                    </select>
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
+              />
+            </div>
+          </Col>
+
           {/* Title */}
           <Col lg={6}>
             <div className="mb-3">
-              <label className="form-label">Title</label>
+              <label className="form-label">Title <span className="text-danger">*</span></label>
               <Controller
                 control={control}
                 name="title"
-                render={({ field }) => <input {...field} type="text" className="form-control" placeholder="Enter Title" />}
+                render={({ field, fieldState }) => (
+                  <>
+                    <input {...field} type="text" className={`form-control ${fieldState.error ? 'is-invalid' : ''}`} placeholder="Enter Title" />
+                    {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
+                  </>
+                )}
               />
             </div>
           </Col>
@@ -36,15 +93,22 @@ const GeneralInformationCard = ({ control, setImage }: GeneralInformationCardPro
           {/* Banner Image */}
           <Col lg={6}>
             <div className="mb-3">
-              <label className="form-label">Banner Image Size (256px * 62px)</label>
-              <input type="file" className="form-control" onChange={(e) => setImage(e.target.files?.[0] || null)} />
+              <label className="form-label">
+                Banner Image <span className="text-danger">*</span>
+                {imageSizeHint && (
+                  <span className="ms-2 text-muted fw-normal" style={{ fontSize: '0.78rem' }}>
+                    Recommended: {imageSizeHint}
+                  </span>
+                )}
+              </label>
+              <input type="file" accept="image/*" className="form-control" onChange={(e) => setImage(e.target.files?.[0] || null)} />
             </div>
           </Col>
 
           {/* Order */}
           <Col lg={6}>
             <div className="mb-3">
-              <label className="form-label">Order</label>
+              <label className="form-label">Order <span className="text-muted fw-normal" style={{ fontSize: '0.78rem' }}>(lower = first)</span></label>
               <Controller
                 control={control}
                 name="order"
@@ -59,14 +123,13 @@ const GeneralInformationCard = ({ control, setImage }: GeneralInformationCardPro
               <label className="form-label">Status</label>
               <Controller
                 control={control}
-                name="status"
+                name="isActive"
                 render={({ field }) => (
                   <select
                     {...field}
                     className="form-control form-select"
                     onChange={(e) => field.onChange(e.target.value === 'true')}
-                    value={field.value === true ? 'true' : field.value === false ? 'false' : ''}>
-                    <option value="">Select Status</option>
+                    value={field.value === true ? 'true' : field.value === false ? 'false' : 'true'}>
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
                   </select>
@@ -90,14 +153,26 @@ const HomeBannerAdd = () => {
   const router = useRouter()
 
   const [createHomeBanner, { isLoading }] = useCreateHomeBannerMutation()
-  console.log(createHomeBanner)
+
   const messageSchema = yup.object({
     title: yup.string().required('Please enter title'),
+    bannerType: yup.string().required('Please select a banner page'),
+    platform: yup.string().required('Please select a platform'),
   })
 
-  const { reset, handleSubmit, control } = useForm({
+  const { reset, handleSubmit, control, watch } = useForm<any>({
     resolver: yupResolver(messageSchema),
+    defaultValues: {
+      title: '',
+      bannerType: '',
+      platform: '',
+      order: undefined,
+      isActive: true,
+    },
   })
+
+  const watchBannerType = watch('bannerType') as BannerType
+  const watchPlatform = watch('platform') as BannerPlatform
 
   // ✅ Toast trigger
   const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -114,15 +189,17 @@ const HomeBannerAdd = () => {
 
     const formData = new FormData()
     formData.append('title', values.title)
-    formData.append('order', values.order || '')
-    formData.append('status', values.status || '')
+    formData.append('bannerType', values.bannerType)
+    formData.append('platform', values.platform)
+    formData.append('isActive', String(values.isActive ?? true))
+    if (values.order !== undefined && values.order !== '') formData.append('order', String(values.order))
     formData.append('image', image)
 
     try {
       await createHomeBanner(formData).unwrap()
       showMessage('Banner Created successfully!', 'success')
       setTimeout(() => {
-        router.push('/home-banner') // ✅ update path if needed
+        router.push('/home-banner')
       }, 2000)
       reset()
       setImage(null)
@@ -135,7 +212,7 @@ const HomeBannerAdd = () => {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <GeneralInformationCard control={control} setImage={setImage} />
+        <GeneralInformationCard control={control} setImage={setImage} watchBannerType={watchBannerType} watchPlatform={watchPlatform} />
 
         <div className="p-3 bg-light mb-3 rounded">
           <Row className="justify-content-end g-2">
