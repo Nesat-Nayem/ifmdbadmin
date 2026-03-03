@@ -6,7 +6,7 @@ export type BannerPlatform = 'web' | 'mobile' | 'both'
 
 export const BANNER_TYPE_LABELS: Record<BannerType, string> = {
   home: 'Home',
-  film_mart: 'Film Mart',
+  film_mart: 'Film Trade',
   events: 'Events',
   watch_movies: 'Watch Movies',
 }

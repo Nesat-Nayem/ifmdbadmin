@@ -75,8 +75,8 @@ const GeneralInformationCard = ({ control, imagePreview, setImagePreview, banner
                   <>
                     <select {...field} className={`form-control form-select ${fieldState.error ? 'is-invalid' : ''}`}>
                       <option value="">Select Platform</option>
-                      <option value="web">Web (Next.js)</option>
-                      <option value="mobile">Mobile (Flutter)</option>
+                      <option value="web">Web</option>
+                      <option value="mobile">Mobile</option>
                       <option value="both">Both</option>
                     </select>
                     {fieldState.error && <div className="invalid-feedback">{fieldState.error.message}</div>}
