@@ -94,8 +94,17 @@ const EventsAdd = () => {
     { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
   ])
 
-  // Fetch event categories
-  const { data: eventCategories = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
+  // Event Categories (Participation Types) state - default 4 categories
+  const DEFAULT_PARTICIPATION_TYPES = [
+    'Awardee & Represent our show',
+    'Sponsored',
+    'Ticket Booking',
+    'Participate'
+  ]
+  const [participationTypes, setParticipationTypes] = useState<string[]>(DEFAULT_PARTICIPATION_TYPES)
+
+  // Fetch event categories (for category dropdown)
+  const { data: eventCategoriesData = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
   const [uploadSingle] = useUploadSingleMutation()
 
   const {
@@ -231,7 +240,7 @@ const EventsAdd = () => {
       setUploadStatus('Creating event...')
 
       // Find categoryId from selected category name
-      const selectedCat = eventCategories.find((cat: IEventCategory) => cat.name === values.category)
+      const selectedCat = eventCategoriesData.find((cat: IEventCategory) => cat.name === values.category)
 
       // Filter out empty seat types
       const validSeatTypes = seatTypes.filter(st => st.name.trim() !== '' && st.totalSeats > 0)
@@ -253,6 +262,7 @@ const EventsAdd = () => {
         cloudflareVideoUid: cloudflareVideoUid,
         galleryImages: galleryImageUrls,
         seatTypes: validSeatTypes,
+        eventCategories: participationTypes.filter((cat: string) => cat.trim() !== ''),
         performers: performers.filter(p => p.name.trim() !== '').map((p) => ({
           name: p.name,
           type: p.type,
@@ -291,6 +301,7 @@ const EventsAdd = () => {
       setVideoUrl('')
       setCloudflareVideoUid('')
       setSeatTypes([{ name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }])
+      setParticipationTypes(DEFAULT_PARTICIPATION_TYPES)
       
       setTimeout(() => {
         router.push('/events/events-list')
@@ -381,7 +392,7 @@ const EventsAdd = () => {
                     {categoriesLoading ? (
                       <option disabled>Loading categories...</option>
                     ) : (
-                      eventCategories.map((cat: IEventCategory) => (
+                      eventCategoriesData.map((cat: IEventCategory) => (
                         <option key={cat._id} value={cat.name}>
                           {cat.name}
                         </option>
@@ -684,6 +695,59 @@ const EventsAdd = () => {
                         type="button"
                         className="btn btn-outline-danger w-100"
                         onClick={() => removeSeatType(index)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </Col>
+                </Row>
+              ))}
+            </CardBody>
+          </Card>
+
+          {/* Event Categories (Participation Types) */}
+          <Card className="mt-4">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <div>
+                <CardTitle as="h4">Event Categories (Participation Types)</CardTitle>
+                <small className="text-muted">Users must select one of these categories when booking tickets</small>
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-primary" 
+                onClick={() => setParticipationTypes([...participationTypes, ''])}
+              >
+                + Add Category
+              </button>
+            </CardHeader>
+            <CardBody>
+              <div className="alert alert-info mb-3">
+                <small>
+                  <strong>Default categories:</strong> Awardee & Represent our show, Sponsored, Ticket Booking, Participate. 
+                  You can add, edit, or remove categories as needed.
+                </small>
+              </div>
+              {participationTypes.map((category, index) => (
+                <Row key={`participation-${index}`} className="align-items-center mb-2">
+                  <Col lg={10}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={category}
+                      onChange={(e) => {
+                        const updated = [...participationTypes]
+                        updated[index] = e.target.value
+                        setParticipationTypes(updated)
+                      }}
+                      placeholder="Enter participation type (e.g., VIP Guest, Sponsor, Participant)"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    {participationTypes.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger w-100"
+                        onClick={() => setParticipationTypes(participationTypes.filter((_, i) => i !== index))}
                       >
                         ✕
                       </button>
