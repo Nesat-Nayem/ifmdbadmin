@@ -437,8 +437,24 @@ const VendorProfile = () => {
                     </CardHeader>
                     <CardBody>
                       <Alert variant="info" className="mb-4">
-                        <strong>Note:</strong> Please ensure your bank details are correct. These details will be used for processing your withdrawal requests.
+                        <strong>Note:</strong> Please ensure your bank details are correct. Your bank account will be registered with Razorpay Route for receiving payments.
+                        <ul className="mb-0 mt-2 small">
+                          <li><strong>Watch Movie earnings:</strong> Automatically settled to your bank account after platform fee deduction.</li>
+                          <li><strong>Event earnings:</strong> Added to your wallet balance. You need to request withdrawal, which admin will approve to release funds to your bank.</li>
+                        </ul>
                       </Alert>
+                      {walletStats?.wallet?.razorpayLinkedAccountId && (
+                        <Alert variant={walletStats.wallet.razorpayAccountStatus === 'activated' ? 'success' : 'warning'} className="mb-4">
+                          <strong>Razorpay Route Status:</strong>{' '}
+                          {walletStats.wallet.razorpayAccountStatus === 'activated'
+                            ? 'Your account is active. Payments will be processed via Razorpay Route.'
+                            : walletStats.wallet.razorpayAccountStatus === 'created'
+                            ? 'Your account has been created and is pending activation. Please wait for verification.'
+                            : walletStats.wallet.razorpayAccountStatus === 'failed'
+                            ? 'Account setup failed. Please update your bank details to retry.'
+                            : 'Account status: ' + (walletStats.wallet.razorpayAccountStatus || 'Unknown')}
+                        </Alert>
+                      )}
                       <Form onSubmit={handleUpdateBankDetails}>
                         <Row>
                           <Col md={6}>
@@ -500,22 +516,13 @@ const VendorProfile = () => {
                               />
                             </Form.Group>
                           </Col>
-                          <Col md={6}>
-                            <Form.Group className="mb-3">
-                              <Form.Label>UPI ID (Optional)</Form.Label>
-                              <Form.Control
-                                type="text"
-                                value={bankForm.upiId}
-                                onChange={(e) => setBankForm({ ...bankForm, upiId: e.target.value })}
-                                placeholder="yourname@upi"
-                              />
-                            </Form.Group>
-                          </Col>
                         </Row>
                         <div className="d-flex gap-2">
                           <Button type="submit" variant="primary" disabled={isUpdatingBank || isDeletingBank}>
                             {isUpdatingBank ? <Spinner size="sm" className="me-2" /> : null}
-                            Save Bank Details
+                            {walletStats?.wallet?.razorpayLinkedAccountId && walletStats?.wallet?.razorpayAccountStatus !== 'activated'
+                              ? 'Save & Retry Activation'
+                              : 'Save Bank Details'}
                           </Button>
                           {walletStats?.wallet?.bankDetails?.accountNumber && (
                             <Button

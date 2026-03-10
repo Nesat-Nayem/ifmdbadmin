@@ -72,6 +72,8 @@ export interface IWithdrawalRequest {
   processedAt?: string
   failureReason?: string
   adminNotes?: string
+  isRouteWithdrawal?: boolean
+  razorpayTransferIds?: string[]
   createdAt: string
   updatedAt: string
 }

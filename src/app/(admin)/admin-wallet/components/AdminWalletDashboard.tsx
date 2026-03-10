@@ -334,7 +334,12 @@ const AdminWalletDashboard = () => {
                               {withdrawal.bankDetails.bankName}
                             </small>
                           </td>
-                          <td>{getStatusBadge(withdrawal.status)}</td>
+                          <td>
+                            {getStatusBadge(withdrawal.status)}
+                            {withdrawal.isRouteWithdrawal && (
+                              <Badge bg="info" className="ms-1">Route</Badge>
+                            )}
+                          </td>
                           <td>
                             {(withdrawal.status === 'pending' || withdrawal.status === 'processing') && (
                               <Button
@@ -476,8 +481,20 @@ const AdminWalletDashboard = () => {
               <div className="mb-3 p-3 bg-light rounded">
                 <p className="mb-1"><strong>Amount:</strong> {formatCurrency(selectedWithdrawal.amount)}</p>
                 <p className="mb-1"><strong>Account:</strong> {selectedWithdrawal.bankDetails.accountNumber}</p>
-                <p className="mb-0"><strong>IFSC:</strong> {selectedWithdrawal.bankDetails.ifscCode}</p>
+                <p className="mb-1"><strong>IFSC:</strong> {selectedWithdrawal.bankDetails.ifscCode}</p>
+                <p className="mb-0"><strong>Type:</strong> {selectedWithdrawal.isRouteWithdrawal ? 'Razorpay Route (Event Earnings)' : 'Manual Withdrawal'}</p>
               </div>
+
+              {selectedWithdrawal.isRouteWithdrawal && (
+                <Alert variant="info" className="mb-3">
+                  <strong>Route Withdrawal:</strong> Approving this will release held Razorpay Route transfers. Funds will be automatically settled to the vendor&apos;s bank account by Razorpay.
+                  {selectedWithdrawal.razorpayTransferIds && selectedWithdrawal.razorpayTransferIds.length > 0 && (
+                    <small className="d-block mt-1">
+                      {selectedWithdrawal.razorpayTransferIds.length} transfer(s) will be released.
+                    </small>
+                  )}
+                </Alert>
+              )}
 
               <Form.Group className="mb-3">
                 <Form.Label>Status *</Form.Label>
