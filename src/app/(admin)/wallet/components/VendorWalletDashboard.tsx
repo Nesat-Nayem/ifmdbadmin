@@ -140,8 +140,9 @@ const VendorWalletDashboard = () => {
             <CardBody>
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <p className="text-muted mb-1">Available Balance</p>
-                  <h3 className="text-success mb-0">{formatCurrency(stats.wallet.balance)}</h3>
+                  <p className="text-muted mb-1">{isRouteVendor ? 'Event Earnings (Withdrawable)' : 'Available Balance'}</p>
+                  <h3 className="text-success mb-0">{formatCurrency(isRouteVendor ? Math.max(0, (stats.earningsByService['events']?.total || 0) - stats.wallet.totalWithdrawn - (stats.pendingWithdrawalAmount || 0)) : stats.wallet.balance)}</h3>
+                  {isRouteVendor && <small className="text-muted">Request withdrawal to receive</small>}
                 </div>
                 <div className="bg-success bg-opacity-10 rounded-circle p-3">
                   <i className="bi bi-wallet2 fs-3 text-success"></i>
@@ -155,11 +156,16 @@ const VendorWalletDashboard = () => {
             <CardBody>
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <p className="text-muted mb-1">Pending (7-day hold)</p>
-                  <h3 className="text-warning mb-0">{formatCurrency(stats.wallet.pendingBalance)}</h3>
+                  <p className="text-muted mb-1">{isRouteVendor ? 'Watch Movie Earnings' : 'Pending Balance'}</p>
+                  <h3 className="text-warning mb-0">
+                    {isRouteVendor
+                      ? formatCurrency(stats.earningsByService['movie_watch']?.total || 0)
+                      : formatCurrency(stats.wallet.pendingBalance)}
+                  </h3>
+                  {isRouteVendor && <small className="text-muted">Auto-settled to bank</small>}
                 </div>
                 <div className="bg-warning bg-opacity-10 rounded-circle p-3">
-                  <i className="bi bi-clock-history fs-3 text-warning"></i>
+                  <i className={`bi ${isRouteVendor ? 'bi-camera-reels' : 'bi-clock-history'} fs-3 text-warning`}></i>
                 </div>
               </div>
             </CardBody>
@@ -294,13 +300,22 @@ const VendorWalletDashboard = () => {
                       {getRouteStatusBadge(stats.wallet.razorpayAccountStatus)}
                     </div>
                     {isRouteVendor ? (
-                      <Alert variant="success" className="mb-0 mt-3">
-                        <small>
-                          <strong>Automatic Settlements Enabled</strong><br />
-                          Your earnings from events and movie purchases are automatically transferred
-                          to your bank account after the hold period. No manual withdrawal needed.
-                        </small>
-                      </Alert>
+                      stats.wallet.razorpayAccountStatus === 'activated' ? (
+                        <Alert variant="success" className="mb-0 mt-3">
+                          <small>
+                            <strong>Route Payments Active</strong><br />
+                            🎬 <strong>Watch Movie:</strong> Earnings settle directly to your bank automatically.<br />
+                            🎭 <strong>Events:</strong> Earnings added to your wallet — request withdrawal anytime for admin to release funds to your bank.
+                          </small>
+                        </Alert>
+                      ) : (
+                        <Alert variant="warning" className="mb-0 mt-3">
+                          <small>
+                            <strong>Route Account Pending Activation</strong><br />
+                            Go to <strong>Profile &gt; Bank Details</strong> and click <strong>Save &amp; Retry Activation</strong> to activate your Route account.
+                          </small>
+                        </Alert>
+                      )
                     ) : (
                       <Alert variant="info" className="mb-0 mt-3">
                         <small>
@@ -433,15 +448,6 @@ const VendorWalletDashboard = () => {
                 type="text"
                 value={bankForm.branchName}
                 onChange={(e) => setBankForm({ ...bankForm, branchName: e.target.value })}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>UPI ID (Optional)</Form.Label>
-              <Form.Control
-                type="text"
-                value={bankForm.upiId}
-                onChange={(e) => setBankForm({ ...bankForm, upiId: e.target.value })}
-                placeholder="yourname@upi"
               />
             </Form.Group>
           </Form>

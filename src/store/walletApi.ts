@@ -91,6 +91,7 @@ export interface IWalletStats {
   }
   recentTransactions: IWalletTransaction[]
   pendingWithdrawals: number
+  pendingWithdrawalAmount: number
 }
 
 export interface IAdminWalletStats {

@@ -182,8 +182,16 @@ const VendorProfile = () => {
       showMessage('danger', 'Minimum withdrawal amount is ₹100')
       return
     }
-    if (walletStats && amount > walletStats.wallet.balance) {
-      showMessage('danger', 'Insufficient balance')
+    
+    // For Route vendors: check against event earnings minus withdrawn
+    // For non-Route vendors: check against wallet balance
+    const isRouteVendor = !!walletStats?.wallet?.razorpayLinkedAccountId
+    const availableForWithdrawal = isRouteVendor
+      ? Math.max(0, (walletStats?.earningsByService?.['events']?.total || 0) - (walletStats?.wallet?.totalWithdrawn || 0) - (walletStats?.pendingWithdrawalAmount || 0))
+      : walletStats?.wallet?.balance || 0
+    
+    if (walletStats && amount > availableForWithdrawal) {
+      showMessage('danger', `Insufficient balance. Available: ₹${availableForWithdrawal.toFixed(2)}`)
       return
     }
     try {
@@ -567,22 +575,24 @@ const VendorProfile = () => {
                             <Form onSubmit={handleRequestWithdrawal}>
                               <Alert variant="info" className="mb-4">
                                 <small>
-                                  <strong>Note:</strong> Minimum withdrawal is ₹100. Withdrawals are processed within 24-48 hours.
-                                  Only one pending withdrawal request is allowed at a time.
+                                  <strong>Event Earnings Withdrawal:</strong> Your event ticket sale earnings are held on Razorpay until you request a withdrawal.
+                                  Submit a request below — once admin approves, funds will be released to your bank account via Razorpay Route.
+                                  Only one pending withdrawal request is allowed at a time. Minimum withdrawal is ₹100.
                                 </small>
                               </Alert>
 
                               <Row className="mb-4">
                                 <Col sm={6}>
                                   <div className="p-3 bg-success bg-opacity-10 rounded">
-                                    <small className="text-muted d-block">Available Balance</small>
-                                    <h4 className="text-success mb-0">{formatCurrency(walletStats?.wallet?.balance || 0)}</h4>
+                                    <small className="text-muted d-block">Event Earnings (Withdrawable)</small>
+                                    <h4 className="text-success mb-0">{formatCurrency(Math.max(0, (walletStats?.earningsByService?.['events']?.total || 0) - (walletStats?.wallet?.totalWithdrawn || 0) - (walletStats?.pendingWithdrawalAmount || 0)))}</h4>
                                   </div>
                                 </Col>
                                 <Col sm={6}>
-                                  <div className="p-3 bg-warning bg-opacity-10 rounded">
-                                    <small className="text-muted d-block">Pending (7-day hold)</small>
-                                    <h4 className="text-warning mb-0">{formatCurrency(walletStats?.wallet?.pendingBalance || 0)}</h4>
+                                  <div className="p-3 bg-info bg-opacity-10 rounded">
+                                    <small className="text-muted d-block">Watch Movie Earnings</small>
+                                    <h4 className="text-info mb-0">{formatCurrency(walletStats?.earningsByService?.['movie_watch']?.total || 0)}</h4>
+                                    <small className="text-muted">Auto-settled to bank</small>
                                   </div>
                                 </Col>
                               </Row>
@@ -594,12 +604,12 @@ const VendorProfile = () => {
                                   value={withdrawAmount}
                                   onChange={(e) => setWithdrawAmount(e.target.value)}
                                   min={100}
-                                  max={walletStats?.wallet?.balance || 0}
+                                  max={Math.max(0, (walletStats?.earningsByService?.['events']?.total || 0) - (walletStats?.wallet?.totalWithdrawn || 0) - (walletStats?.pendingWithdrawalAmount || 0))}
                                   placeholder="Enter amount"
                                   required
                                 />
                                 <Form.Text className="text-muted">
-                                  Minimum: ₹100 | Maximum: {formatCurrency(walletStats?.wallet?.balance || 0)}
+                                  Minimum: ₹100 | Maximum: {formatCurrency(Math.max(0, (walletStats?.earningsByService?.['events']?.total || 0) - (walletStats?.wallet?.totalWithdrawn || 0) - (walletStats?.pendingWithdrawalAmount || 0)))}
                                 </Form.Text>
                               </Form.Group>
 
@@ -613,7 +623,7 @@ const VendorProfile = () => {
                               <Button
                                 type="submit"
                                 variant="success"
-                                disabled={isRequestingWithdrawal || !walletStats?.wallet?.balance || walletStats.wallet.balance < 100}
+                                disabled={isRequestingWithdrawal || Math.max(0, (walletStats?.earningsByService?.['events']?.total || 0) - (walletStats?.wallet?.totalWithdrawn || 0) - (walletStats?.pendingWithdrawalAmount || 0)) < 100}
                               >
                                 {isRequestingWithdrawal ? <Spinner size="sm" className="me-2" /> : null}
                                 Request Withdrawal
