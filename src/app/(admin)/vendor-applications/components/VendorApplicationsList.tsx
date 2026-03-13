@@ -1,8 +1,8 @@
 'use client'
 
-import { useGetVendorApplicationsQuery, useApproveVendorApplicationMutation, useRejectVendorApplicationMutation, IVendorApplication } from '@/store/vendorApi'
-import React, { useState } from 'react'
-import { Button, Card, CardBody, CardHeader, CardTitle, Container, Badge, Modal, Spinner, Table, Form } from 'react-bootstrap'
+import { useGetVendorApplicationsQuery, useApproveVendorApplicationMutation, useRejectVendorApplicationMutation, useDeleteVendorApplicationMutation, IVendorApplication } from '@/store/vendorApi'
+import React, { useState, useMemo } from 'react'
+import { Button, Card, CardBody, CardHeader, CardTitle, Container, Badge, Modal, Spinner, Table, Form, InputGroup, Row, Col } from 'react-bootstrap'
 import { Toast, ToastContainer } from 'react-bootstrap'
 
 interface Props {
@@ -10,9 +10,26 @@ interface Props {
 }
 
 const VendorApplicationsList = ({ status }: Props) => {
-  const { data: applications = [], isLoading, isError, refetch } = useGetVendorApplicationsQuery(status ? { status } : undefined)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  
+  // Debounce search
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const queryParams = useMemo(() => {
+    const params: { status?: string; search?: string } = {}
+    if (status) params.status = status
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim()
+    return Object.keys(params).length > 0 ? params : undefined
+  }, [status, debouncedSearch])
+
+  const { data: applications = [], isLoading, isError, refetch } = useGetVendorApplicationsQuery(queryParams)
   const [approveApp] = useApproveVendorApplicationMutation()
   const [rejectApp] = useRejectVendorApplicationMutation()
+  const [deleteApp] = useDeleteVendorApplicationMutation()
   
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -20,6 +37,7 @@ const VendorApplicationsList = ({ status }: Props) => {
   
   const [viewModal, setViewModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
   const [rejectModal, setRejectModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
   const [rejectionReason, setRejectionReason] = useState('')
   const [processing, setProcessing] = useState(false)
 
@@ -55,6 +73,21 @@ const VendorApplicationsList = ({ status }: Props) => {
     setProcessing(false)
   }
 
+  const handleDelete = async () => {
+    if (!deleteModal.app) return
+    setProcessing(true)
+    try {
+      await deleteApp(deleteModal.app._id).unwrap()
+      showMessage(deleteModal.app.status === 'approved' 
+        ? 'Application and vendor account deleted successfully!' 
+        : 'Application deleted successfully!')
+      setDeleteModal({ show: false, app: null })
+    } catch (err: any) {
+      showMessage(err?.data?.message || 'Failed to delete', 'danger')
+    }
+    setProcessing(false)
+  }
+
   const getStatusBadge = (s: string) => {
     const variants: Record<string, string> = { pending: 'warning', approved: 'success', rejected: 'danger' }
     return <Badge bg={variants[s] || 'secondary'}>{s.toUpperCase()}</Badge>
@@ -82,7 +115,26 @@ const VendorApplicationsList = ({ status }: Props) => {
       <Container>
         <Card>
           <CardHeader>
-            <CardTitle as="h4">📋 {status === 'pending' ? 'Pending' : 'All'} Vendor Applications</CardTitle>
+            <Row className="align-items-center">
+              <Col>
+                <CardTitle as="h4" className="mb-0">📋 {status === 'pending' ? 'Pending' : 'All'} Vendor Applications</CardTitle>
+              </Col>
+              <Col md={4}>
+                <InputGroup>
+                  <Form.Control
+                    type="text"
+                    placeholder="Search by name, email, phone..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
+                      ✕
+                    </Button>
+                  )}
+                </InputGroup>
+              </Col>
+            </Row>
           </CardHeader>
           <CardBody>
             {applications.length === 0 ? (
@@ -142,6 +194,9 @@ const VendorApplicationsList = ({ status }: Props) => {
                               </Button>
                             </>
                           )}
+                          <Button size="sm" variant="outline-danger" onClick={() => setDeleteModal({ show: true, app })} title="Delete">
+                            🗑️
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -228,6 +283,34 @@ const VendorApplicationsList = ({ status }: Props) => {
           <Button variant="secondary" onClick={() => setRejectModal({ show: false, app: null })}>Cancel</Button>
           <Button variant="danger" onClick={handleReject} disabled={processing || !rejectionReason}>
             {processing ? 'Rejecting...' : 'Reject Application'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={deleteModal.show} onHide={() => setDeleteModal({ show: false, app: null })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Application</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {deleteModal.app && (
+            <div>
+              <p>Are you sure you want to delete the application for <strong>{deleteModal.app.vendorName}</strong>?</p>
+              {deleteModal.app.status === 'approved' && (
+                <div className="alert alert-warning">
+                  <strong>Warning:</strong> This vendor has been approved. Deleting will also remove their vendor account and they will no longer be able to log in.
+                </div>
+              )}
+              {deleteModal.app.status === 'pending' && (
+                <p className="text-muted">This application has not been approved yet, so no user account will be affected.</p>
+              )}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteModal({ show: false, app: null })}>Cancel</Button>
+          <Button variant="danger" onClick={handleDelete} disabled={processing}>
+            {processing ? 'Deleting...' : 'Delete Application'}
           </Button>
         </Modal.Footer>
       </Modal>

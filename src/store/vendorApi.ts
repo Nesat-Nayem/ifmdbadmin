@@ -155,7 +155,7 @@ export const vendorApi = createApi({
     }),
 
     // ============ VENDOR APPLICATIONS ============
-    getVendorApplications: builder.query<IVendorApplication[], { status?: string } | void>({
+    getVendorApplications: builder.query<IVendorApplication[], { status?: string; search?: string } | void>({
       query: (params) => ({
         url: '/vendors/applications',
         params: params || {},
