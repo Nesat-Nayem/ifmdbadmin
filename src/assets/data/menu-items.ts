@@ -63,6 +63,13 @@ export const MENU_ITEMS: MenuItemType[] = [
     allowedRoles: ['admin'],
   },
   {
+    key: 'homepage-category',
+    label: 'Homepage Categories',
+    icon: 'solar:widget-4-bold-duotone',
+    url: '/homepage-category',
+    allowedRoles: ['admin'],
+  },
+  {
     key: 'section-settings',
     label: 'Section Settings',
     icon: 'solar:palette-bold-duotone',

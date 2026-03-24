@@ -30,6 +30,7 @@ import { profileApi } from './profileApi'
 import { sectionSettingsApi } from './sectionSettingsApi'
 import { dashboardApi } from './dashboardApi'
 import { scannerApi } from './scannerApi'
+import { homepageCategoryApi } from './homepageCategoryApi'
 
 export const store = configureStore({
   reducer: {
@@ -64,6 +65,7 @@ export const store = configureStore({
     [sectionSettingsApi.reducerPath]: sectionSettingsApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [scannerApi.reducerPath]: scannerApi.reducer,
+    [homepageCategoryApi.reducerPath]: homepageCategoryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -99,6 +101,7 @@ export const store = configureStore({
       sectionSettingsApi.middleware,
       dashboardApi.middleware,
       scannerApi.middleware,
+      homepageCategoryApi.middleware,
     ),
 })
 
