@@ -58,8 +58,12 @@ export interface IEvents {
   tags: string[]
   videoUrl?: string
   cloudflareVideoUid?: string
-  status: 'upcoming' | 'ongoing' | 'completed' | string
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled' | string
   isActive: boolean
+  isScheduled?: boolean
+  visibleFrom?: string
+  visibleUntil?: string
+  vendorId?: string
   createdAt: string
   updatedAt: string
 }
@@ -86,7 +90,7 @@ export const eventsApi = createApi({
   tagTypes: ['Events'],
   endpoints: (builder) => ({
     getEvents: builder.query<IEvents[], void>({
-      query: () => '/events?vendorOnly=true',
+      query: () => '/events?vendorOnly=true&limit=1000&sortBy=createdAt&sortOrder=desc',
       transformResponse: (response: EventsResponse) => (Array.isArray(response.data) ? response.data : [response.data]),
       providesTags: ['Events'],
     }),
