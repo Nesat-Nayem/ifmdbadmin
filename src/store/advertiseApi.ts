@@ -20,7 +20,7 @@ interface AdvertiseResponse {
 export const advertiseApi = createApi({
   reducerPath: 'advertiseApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:8080/v1/api',
+    baseUrl: 'http://api.moviemart.org/v1/api',
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as IRootState).auth.token
       if (token) {
