@@ -284,8 +284,8 @@ const EventsAdd = () => {
         isGovernmentEvent: values.isGovernmentEvent || false, // Government events have fixed 10% platform fee
         // Visibility Schedule
         isScheduled: values.isScheduled,
-        visibleFrom: values.isScheduled && values.visibleFrom ? new Date(values.visibleFrom).toISOString() : null,
-        visibleUntil: values.isScheduled && values.visibleUntil ? new Date(values.visibleUntil).toISOString() : null,
+        visibleFrom: values.isScheduled && values.visibleFrom ? new Date(values.visibleFrom).toISOString() : undefined,
+        visibleUntil: values.isScheduled && values.visibleUntil ? new Date(values.visibleUntil).toISOString() : undefined,
         autoDeleteOnExpiry: values.isScheduled ? values.autoDeleteOnExpiry : false,
       }
 
