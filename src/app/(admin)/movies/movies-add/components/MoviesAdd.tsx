@@ -151,7 +151,7 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
             {/* Poster URL */}
             <Col lg={6}>
               <div className="mb-3">
-                <label className="form-label">Poster Image</label>
+                <label className="form-label">Horizontal Image</label>
          
                 {errors?.posterUrl && <p className="text-danger">{errors.posterUrl.message}</p>}
                 <div className="mt-2">
@@ -186,7 +186,7 @@ const GeneralInformationCard = ({ control, setImage, errors, setValue, trailerUr
             {/* Backdrop URL */}
             <Col lg={6}>
               <div className="mb-3">
-                <label className="form-label">Backdrop Image</label>
+                <label className="form-label">Vertical Image</label>
     
                 <div className="mt-2">
                   <input

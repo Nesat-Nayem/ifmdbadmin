@@ -746,7 +746,7 @@ const WatchVideosAdd = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label>Poster Image</Form.Label>
+                      <Form.Label>Vertical Poster</Form.Label>
                       <Form.Control 
                         type="file" 
                         accept="image/*"

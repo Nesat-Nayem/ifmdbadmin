@@ -449,7 +449,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
 
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Poster Image</label>
+                  <label className="form-label">Horizontal Image</label>
                   {/* <Controller
                     control={control}
                     name="posterUrl"
@@ -518,7 +518,7 @@ const MoviesEditForm: React.FC<Props> = ({ id }) => {
               {/* Backdrop URL */}
               <Col lg={6}>
                 <div className="mb-3">
-                  <label className="form-label">Backdrop Image</label>
+                  <label className="form-label">Vertical Image</label>
           <div className="mt-2">
                     <input
                       type="file"

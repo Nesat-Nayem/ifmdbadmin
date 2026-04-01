@@ -656,7 +656,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                   {/* Images */}
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label>Thumbnail Image</Form.Label>
+                      <Form.Label>Horizontal Image</Form.Label>
                       <div className="mb-2 position-relative">
                         {(thumbnailFile || video.thumbnailUrl) && (
                           <img 
@@ -682,7 +682,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                   </Col>
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label>Poster Image</Form.Label>
+                      <Form.Label>Vertical Image</Form.Label>
                       <div className="mb-2 position-relative">
                         {(posterFile || video.posterUrl) && (
                           <img 
