@@ -153,7 +153,6 @@ export const watchVideosApi = createApi({
     getChannels: builder.query<{ data: IChannel[]; meta: any }, any>({
       query: (params) => {
         const queryParams = new URLSearchParams()
-        queryParams.append('vendorOnly', 'true')
         if (params?.page) queryParams.append('page', String(params.page))
         if (params?.limit) queryParams.append('limit', String(params.limit))
         if (params?.search) queryParams.append('search', params.search)
@@ -242,7 +241,6 @@ export const watchVideosApi = createApi({
     getWatchVideos: builder.query<{ data: IWatchVideo[]; meta: any }, any>({
       query: (params) => {
         const queryParams = new URLSearchParams()
-        queryParams.append('vendorOnly', 'true')
         if (params?.page) queryParams.append('page', String(params.page))
         if (params?.limit) queryParams.append('limit', String(params.limit))
         if (params?.search) queryParams.append('search', params.search)

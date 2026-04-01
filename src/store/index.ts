@@ -31,6 +31,7 @@ import { sectionSettingsApi } from './sectionSettingsApi'
 import { dashboardApi } from './dashboardApi'
 import { scannerApi } from './scannerApi'
 import { homepageCategoryApi } from './homepageCategoryApi'
+import { eventParticipationTypeApi } from './eventParticipationTypeApi'
 
 export const store = configureStore({
   reducer: {
@@ -66,6 +67,7 @@ export const store = configureStore({
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [scannerApi.reducerPath]: scannerApi.reducer,
     [homepageCategoryApi.reducerPath]: homepageCategoryApi.reducer,
+    [eventParticipationTypeApi.reducerPath]: eventParticipationTypeApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -102,6 +104,7 @@ export const store = configureStore({
       dashboardApi.middleware,
       scannerApi.middleware,
       homepageCategoryApi.middleware,
+      eventParticipationTypeApi.middleware,
     ),
 })
 

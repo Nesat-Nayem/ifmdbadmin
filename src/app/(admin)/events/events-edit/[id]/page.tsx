@@ -2,6 +2,7 @@
 
 import { useGetEventsByIdQuery, useUpdateEventsMutation, IEvents, ISeatType } from '@/store/eventsApi'
 import { useGetEventCategoriesQuery, IEventCategory } from '@/store/eventCategoryApi'
+import { useGetActiveParticipationTypesQuery } from '@/store/eventParticipationTypeApi'
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -90,14 +91,9 @@ const EventsEdit = () => {
     { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
   ])
 
-  // Event Categories (Participation Types) state - default 4 categories
-  const DEFAULT_PARTICIPATION_TYPES = [
-    'Awardee & Represent our show',
-    'Sponsored',
-    'Ticket Booking',
-    'Participate'
-  ]
-  const [participationTypes, setParticipationTypes] = useState<string[]>(DEFAULT_PARTICIPATION_TYPES)
+  // Event Participation Type - single selection from admin-managed list
+  const [selectedParticipationType, setSelectedParticipationType] = useState<string>('')
+  const { data: participationTypeOptions = [], isLoading: participationTypesLoading } = useGetActiveParticipationTypesQuery()
 
   // Fetch event categories
   const { data: eventCategories = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
@@ -234,9 +230,9 @@ const EventsEdit = () => {
         })))
       }
 
-      // Set participation types (eventCategories)
+      // Set participation type (first eventCategory from existing event)
       if ((event as any).eventCategories && (event as any).eventCategories.length > 0) {
-        setParticipationTypes((event as any).eventCategories)
+        setSelectedParticipationType((event as any).eventCategories[0])
       }
 
       setPerformers(
@@ -433,7 +429,7 @@ const EventsEdit = () => {
         availableSeats: values.availableSeats,
         maxTicketsPerPerson: values.maxTicketsPerPerson || 10,
         seatTypes: validSeatTypes,
-        eventCategories: participationTypes.filter((cat: string) => cat.trim() !== ''),
+        eventCategories: selectedParticipationType ? [selectedParticipationType] : [],
         isActive: true,
         location: {
           venueName: values.venueName,
@@ -887,54 +883,36 @@ const EventsEdit = () => {
 
           {/* Event Categories (Participation Types) */}
           <Card className="mt-4">
-            <CardHeader className="d-flex justify-content-between align-items-center">
-              <div>
-                <CardTitle as="h4">Event Categories (Participation Types)</CardTitle>
-                <small className="text-muted">Users must select one of these categories when booking tickets</small>
-              </div>
-              <button 
-                type="button" 
-                className="btn btn-sm btn-outline-primary" 
-                onClick={() => setParticipationTypes([...participationTypes, ''])}
-              >
-                + Add Category
-              </button>
+            <CardHeader>
+              <CardTitle as="h4">Event Participation Type</CardTitle>
+              <small className="text-muted">Select the participation type for this event (managed by admin)</small>
             </CardHeader>
             <CardBody>
-              <div className="alert alert-info mb-3">
-                <small>
-                  <strong>Default categories:</strong> Awardee & Represent our show, Sponsored, Ticket Booking, Participate. 
-                  You can add, edit, or remove categories as needed.
-                </small>
-              </div>
-              {participationTypes.map((category, index) => (
-                <Row key={`participation-${index}`} className="align-items-center mb-2">
-                  <Col lg={10}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={category}
-                      onChange={(e) => {
-                        const updated = [...participationTypes]
-                        updated[index] = e.target.value
-                        setParticipationTypes(updated)
-                      }}
-                      placeholder="Enter participation type (e.g., VIP Guest, Sponsor, Participant)"
-                    />
-                  </Col>
-                  <Col lg={2}>
-                    {participationTypes.length > 1 && (
-                      <button
-                        type="button"
-                        className="btn btn-outline-danger w-100"
-                        onClick={() => setParticipationTypes(participationTypes.filter((_, i) => i !== index))}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </Col>
-                </Row>
-              ))}
+              <Row>
+                <Col lg={6}>
+                  <label className="form-label fw-medium">
+                    Participation Type <span className="text-danger">*</span>
+                  </label>
+                  {participationTypesLoading ? (
+                    <div className="text-muted">Loading types...</div>
+                  ) : participationTypeOptions.length === 0 ? (
+                    <div className="alert alert-warning py-2">
+                      <small>No participation types found. Please ask admin to create them from <strong>Events → Participation Types</strong>.</small>
+                    </div>
+                  ) : (
+                    <select
+                      className="form-select"
+                      value={selectedParticipationType}
+                      onChange={(e) => setSelectedParticipationType(e.target.value)}
+                    >
+                      <option value="">— Select a participation type —</option>
+                      {participationTypeOptions.map((opt) => (
+                        <option key={opt._id} value={opt.name}>{opt.name}</option>
+                      ))}
+                    </select>
+                  )}
+                </Col>
+              </Row>
             </CardBody>
           </Card>
 
