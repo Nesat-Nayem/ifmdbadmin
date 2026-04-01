@@ -74,6 +74,7 @@ type FormValues = yup.InferType<typeof schema> & {
 
 const EventsAdd = () => {
   const [poster, setPoster] = useState<File | null>(null)
+  const [verticalPoster, setVerticalPoster] = useState<File | null>(null)
   const [galleryImages, setGalleryImages] = useState<File[]>([])
   const [videoUrl, setVideoUrl] = useState('')
   const [cloudflareVideoUid, setCloudflareVideoUid] = useState('')
@@ -86,6 +87,7 @@ const EventsAdd = () => {
 
   // Upload loading states
   const [isUploadingPoster, setIsUploadingPoster] = useState(false)
+  const [isUploadingVerticalPoster, setIsUploadingVerticalPoster] = useState(false)
   const [isUploadingGallery, setIsUploadingGallery] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -197,11 +199,11 @@ const EventsAdd = () => {
     try {
       setUploadProgress(0)
       
-      // Upload poster image first
+      // Upload horizontal poster image first
       let posterImageUrl = ''
       if (poster) {
         setIsUploadingPoster(true)
-        setUploadStatus('Uploading poster image...')
+        setUploadStatus('Uploading horizontal poster...')
         setUploadProgress(10)
         try {
           posterImageUrl = await uploadSingle(poster).unwrap()
@@ -210,6 +212,21 @@ const EventsAdd = () => {
           posterImageUrl = URL.createObjectURL(poster)
         }
         setIsUploadingPoster(false)
+        setUploadProgress(20)
+      }
+
+      // Upload vertical poster image
+      let verticalPosterUrl = ''
+      if (verticalPoster) {
+        setIsUploadingVerticalPoster(true)
+        setUploadStatus('Uploading vertical poster...')
+        try {
+          verticalPosterUrl = await uploadSingle(verticalPoster).unwrap()
+        } catch (uploadErr) {
+          console.warn('Vertical poster upload failed, using blob URL')
+          verticalPosterUrl = URL.createObjectURL(verticalPoster)
+        }
+        setIsUploadingVerticalPoster(false)
         setUploadProgress(30)
       }
 
@@ -254,6 +271,7 @@ const EventsAdd = () => {
           longitude: values.longitude || 0,
         },
         posterImage: posterImageUrl,
+        verticalPoster: verticalPosterUrl,
         videoUrl: videoUrl,
         cloudflareVideoUid: cloudflareVideoUid,
         galleryImages: galleryImageUrls,
@@ -293,6 +311,7 @@ const EventsAdd = () => {
       showMessage('Event added successfully!', 'success')
       reset()
       setPoster(null)
+      setVerticalPoster(null)
       setGalleryImages([])
       setVideoUrl('')
       setCloudflareVideoUid('')
@@ -330,10 +349,18 @@ const EventsAdd = () => {
                   {errors.title && <small className="text-danger">{errors.title.message}</small>}
                 </Col>
 
-                {/* Poster Upload */}
+                {/* Horizontal Poster Upload */}
                 <Col lg={6}>
-                  <label className="form-label">Upload Poster *</label>
+                  <label className="form-label">Horizontal Poster *</label>
                   <input type="file" className="form-control" accept="image/*" onChange={(e) => setPoster(e.target.files?.[0] || null)} required />
+                  {isUploadingPoster && <small className="text-muted">Uploading...</small>}
+                </Col>
+
+                {/* Vertical Poster Upload */}
+                <Col lg={6}>
+                  <label className="form-label">Vertical Poster</label>
+                  <input type="file" className="form-control" accept="image/*" onChange={(e) => setVerticalPoster(e.target.files?.[0] || null)} />
+                  {isUploadingVerticalPoster && <small className="text-muted">Uploading...</small>}
                 </Col>
 
                 {/* Event Video Upload */}

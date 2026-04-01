@@ -67,8 +67,10 @@ const EventsEdit = () => {
   const formRef = useRef<HTMLFormElement>(null)
 
   const [poster, setPoster] = useState<File | null>(null)
+  const [verticalPoster, setVerticalPoster] = useState<File | null>(null)
   const [galleryImages, setGalleryImages] = useState<File[]>([])
   const [existingPosterUrl, setExistingPosterUrl] = useState<string>('')
+  const [existingVerticalPosterUrl, setExistingVerticalPosterUrl] = useState<string>('')
   const [existingGalleryUrls, setExistingGalleryUrls] = useState<string[]>([])
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -82,6 +84,7 @@ const EventsEdit = () => {
 
   // Upload loading states
   const [isUploadingPoster, setIsUploadingPoster] = useState(false)
+  const [isUploadingVerticalPoster, setIsUploadingVerticalPoster] = useState(false)
   const [isUploadingGallery, setIsUploadingGallery] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -207,6 +210,10 @@ const EventsEdit = () => {
         setPosterPreview(event.posterImage)
       }
 
+      if ((event as any).verticalPoster) {
+        setExistingVerticalPosterUrl((event as any).verticalPoster)
+      }
+
       // Set existing video URL
       if ((event as any).videoUrl) {
         setVideoUrl((event as any).videoUrl)
@@ -323,11 +330,11 @@ const EventsEdit = () => {
     try {
       setUploadProgress(0)
       
-      // Upload poster image if changed
+      // Upload horizontal poster image if changed
       let posterImageUrl = existingPosterUrl
       if (poster) {
         setIsUploadingPoster(true)
-        setUploadStatus('Uploading poster image...')
+        setUploadStatus('Uploading horizontal poster...')
         setUploadProgress(10)
         try {
           posterImageUrl = await uploadSingle(poster).unwrap()
@@ -335,6 +342,20 @@ const EventsEdit = () => {
           console.warn('Poster upload failed, using existing URL')
         }
         setIsUploadingPoster(false)
+        setUploadProgress(20)
+      }
+
+      // Upload vertical poster if changed
+      let verticalPosterUrl = existingVerticalPosterUrl
+      if (verticalPoster) {
+        setIsUploadingVerticalPoster(true)
+        setUploadStatus('Uploading vertical poster...')
+        try {
+          verticalPosterUrl = await uploadSingle(verticalPoster).unwrap()
+        } catch (uploadErr) {
+          console.warn('Vertical poster upload failed, using existing URL')
+        }
+        setIsUploadingVerticalPoster(false)
         setUploadProgress(30)
       }
 
@@ -441,6 +462,7 @@ const EventsEdit = () => {
           longitude: values.longitude || 0,
         },
         posterImage: posterImageUrl,
+        verticalPoster: verticalPosterUrl,
         galleryImages: galleryImageUrls,
         tags: (values.tagsInput || '')
           .split(',')
@@ -522,15 +544,16 @@ const EventsEdit = () => {
             </CardHeader>
             <CardBody>
               <Row>
-                {/* Poster Upload */}
+                {/* Horizontal Poster Upload */}
                 <Col lg={6}>
-                  <label className="form-label">Upload Poster</label>
+                  <label className="form-label">Horizontal Poster</label>
                   <input
                     type="file"
                     className="form-control"
                     accept="image/*"
                     onChange={(e) => handlePosterChange(e.target.files?.[0] || null)}
                   />
+                  {isUploadingPoster && <small className="text-muted">Uploading...</small>}
                   {posterPreview && (
                     <div className="mt-2">
                       <img 
@@ -540,6 +563,30 @@ const EventsEdit = () => {
                         height={100} 
                         style={{ objectFit: 'cover', borderRadius: '8px' }}
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
+                      />
+                    </div>
+                  )}
+                </Col>
+
+                {/* Vertical Poster Upload */}
+                <Col lg={6}>
+                  <label className="form-label">Vertical Poster</label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    accept="image/*"
+                    onChange={(e) => setVerticalPoster(e.target.files?.[0] || null)}
+                  />
+                  {isUploadingVerticalPoster && <small className="text-muted">Uploading...</small>}
+                  {existingVerticalPosterUrl && !verticalPoster && (
+                    <div className="mt-2">
+                      <img
+                        src={existingVerticalPosterUrl}
+                        alt="vertical poster preview"
+                        width={80}
+                        height={120}
+                        style={{ objectFit: 'cover', borderRadius: '8px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                     </div>
                   )}
