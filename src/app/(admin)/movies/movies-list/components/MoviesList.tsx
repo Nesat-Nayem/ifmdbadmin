@@ -4,20 +4,19 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import Image from 'next/image'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
-import { Card, CardFooter, CardHeader, CardTitle, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap'
+import { Card, CardFooter, CardHeader, CardTitle, Col, Modal, Button, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap'
 import { useDeleteMovieMutation, useGetMoviesQuery } from '@/store/moviesApi'
 
 const MoviesList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [deleteModal, setDeleteModal] = useState({ show: false, id: '', title: '' })
 
-  // ✅ Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
 
-  // ✅ Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400)
     return () => clearTimeout(timer)
@@ -29,40 +28,30 @@ const MoviesList = () => {
   const totalPages = data?.meta?.totalPages ?? 1
 
   const [deleteMovie, { isLoading: isDeleting }] = useDeleteMovieMutation()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // ✅ page change handler
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page)
   }
 
-  // ✅ Reset to page 1 on search change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     setCurrentPage(1)
   }
 
-  // ✅ Toast trigger
   const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
     setToastMessage(msg)
     setToastVariant(type)
     setShowToast(true)
   }
 
-  // ✅ Delete movie handler
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this movie?')) return
-    setDeletingId(id)
+  const handleDelete = async () => {
     try {
-      await deleteMovie(id).unwrap()
+      await deleteMovie(deleteModal.id).unwrap()
+      setDeleteModal({ show: false, id: '', title: '' })
       showMessage('Movie deleted successfully!', 'success')
     } catch (error) {
       console.error(error)
       showMessage('Failed to delete movie', 'error')
-    } finally {
-      setDeletingId(null)
     }
   }
 
@@ -184,14 +173,9 @@ const MoviesList = () => {
                           </Link>
                           <button
                             className="btn btn-soft-danger btn-sm"
-                            onClick={() => handleDelete(movie._id)}
-                            disabled={isDeleting && deletingId === movie._id}
+                            onClick={() => setDeleteModal({ show: true, id: movie._id, title: movie.title })}
                           >
-                            {isDeleting && deletingId === movie._id ? (
-                              <Spinner size="sm" animation="border" className="me-1" />
-                            ) : (
-                              <IconifyIcon icon="solar:trash-bin-minimalistic-2-broken" className="align-middle fs-18" />
-                            )}
+                            <IconifyIcon icon="solar:trash-bin-minimalistic-2-broken" className="align-middle fs-18" />
                           </button>
                         </div>
                       </td>
@@ -231,12 +215,31 @@ const MoviesList = () => {
         </Col>
       </Row>
 
-      {/* ✅ Toast Notification */}
+      {/* Toast Notification */}
       <ToastContainer position="top-end" className="p-3">
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg={toastVariant === 'success' ? 'success' : 'danger'}>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={deleteModal.show} onHide={() => setDeleteModal({ show: false, id: '', title: '' })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to permanently delete <strong>{deleteModal.title}</strong>? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteModal({ show: false, id: '', title: '' })}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? <Spinner size="sm" className="me-1" /> : null}
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   )
 }

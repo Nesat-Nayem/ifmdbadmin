@@ -1,49 +1,42 @@
 'use client'
 
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
-import Image from 'next/image'
 import Link from 'next/link'
 import React, { useState } from 'react'
-import { Card, CardFooter, CardHeader, CardTitle, Col, Row, Toast, ToastContainer } from 'react-bootstrap'
+import { Card, CardFooter, CardHeader, CardTitle, Col, Modal, Button, Spinner, Row, Toast, ToastContainer } from 'react-bootstrap'
 import { useDeleteEventsMutation, useGetEventsQuery } from '@/store/eventsApi'
 
 const EventsList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
+  const [deleteModal, setDeleteModal] = useState({ show: false, id: '', title: '' })
 
-  // ✅ Toast state
+  // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'error'>('success')
   const [showToast, setShowToast] = useState(false)
 
   const { data: eventsData = [], isLoading, isError } = useGetEventsQuery()
-
   const [deleteEvents, { isLoading: isDeleting }] = useDeleteEventsMutation()
 
   if (isLoading) return <div>Loading...</div>
-  if (isError) return <div>Error loading movies</div>
+  if (isError) return <div>Error loading events</div>
 
-  // ✅ filter eventsData by title + category
-  const filteredEvents = eventsData.filter((event: any) => [event.title, event.category].join(' ').toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredEvents = eventsData.filter((event: any) =>
+    [event.title, event.category].join(' ').toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-  // ✅ pagination
   const itemsPerPage = 10
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage) || 1
   const startIndex = (currentPage - 1) * itemsPerPage
   const currentItems = filteredEvents.slice(startIndex, startIndex + itemsPerPage)
 
-  // ✅ page change handler
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page)
   }
 
-  // ✅ Smart pagination: returns page numbers + ellipsis markers
   const getPageNumbers = (): (number | '...')[] => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1)
-    }
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
     const pages: (number | '...')[] = []
     if (currentPage <= 4) {
       pages.push(1, 2, 3, 4, 5, '...', totalPages)
@@ -55,21 +48,20 @@ const EventsList = () => {
     return pages
   }
 
-  // ✅ Toast trigger
   const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
     setToastMessage(msg)
     setToastVariant(type)
     setShowToast(true)
   }
 
-  // ✅ Delete handler
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
     try {
-      await deleteEvents(id).unwrap()
-      showMessage('Events deleted successfully!', 'success')
+      await deleteEvents(deleteModal.id).unwrap()
+      setDeleteModal({ show: false, id: '', title: '' })
+      showMessage('Event deleted successfully!', 'success')
     } catch (error: any) {
       console.error('Delete failed:', error)
-      showMessage(error?.data?.message || 'Failed to delete Events', 'error')
+      showMessage(error?.data?.message || 'Failed to delete event', 'error')
     }
   }
 
@@ -218,7 +210,10 @@ const EventsList = () => {
                           <Link href={`/events/events-edit/${event._id}`} className="btn btn-soft-info btn-sm">
                             <IconifyIcon icon="solar:pen-2-broken" className="align-middle fs-18" />
                           </Link>
-                          <button className="btn btn-soft-danger btn-sm" onClick={() => handleDelete(event._id)} disabled={isDeleting}>
+                          <button
+                            className="btn btn-soft-danger btn-sm"
+                            onClick={() => setDeleteModal({ show: true, id: event._id, title: event.title })}
+                          >
                             <IconifyIcon icon="solar:trash-bin-minimalistic-2-broken" className="align-middle fs-18" />
                           </button>
                         </div>
@@ -273,12 +268,31 @@ const EventsList = () => {
         </Col>
       </Row>
 
-      {/* ✅ Toast Notification */}
+      {/* Toast Notification */}
       <ToastContainer position="top-end" className="p-3">
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg={toastVariant === 'success' ? 'success' : 'danger'}>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={deleteModal.show} onHide={() => setDeleteModal({ show: false, id: '', title: '' })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to permanently delete <strong>{deleteModal.title}</strong>? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteModal({ show: false, id: '', title: '' })}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? <Spinner size="sm" className="me-1" /> : null}
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   )
 }
