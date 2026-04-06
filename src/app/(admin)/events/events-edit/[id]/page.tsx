@@ -11,7 +11,6 @@ import { Button, Card, CardBody, CardHeader, CardTitle, Col, Container, Row, Spi
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
-import Image from 'next/image'
 import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 // Seat Type Interface
@@ -46,16 +45,13 @@ const schema = yup.object().shape({
   totalSeats: yup.number().typeError('Enter valid number').required('Total seats required'),
   availableSeats: yup.number().typeError('Enter valid number').required('Available seats required'),
   maxTicketsPerPerson: yup.number().typeError('Enter valid number').default(10),
-  tagsInput: yup.string().optional(),
   homeSection: yup.string().oneOf(['', 'trending_events', 'celebrity_events', 'exclusive_invite_only', 'near_you']).optional(),
 })
 
 type FormValues = yup.InferType<typeof schema> & {
   posterImage?: string
-  galleryImages?: string[]
   performers?: string[]
   organizers?: string[]
-  tags?: string[]
   seatTypes?: ILocalSeatType[]
   homeSection?: string
 }
@@ -68,10 +64,8 @@ const EventsEdit = () => {
 
   const [poster, setPoster] = useState<File | null>(null)
   const [verticalPoster, setVerticalPoster] = useState<File | null>(null)
-  const [galleryImages, setGalleryImages] = useState<File[]>([])
   const [existingPosterUrl, setExistingPosterUrl] = useState<string>('')
   const [existingVerticalPosterUrl, setExistingVerticalPosterUrl] = useState<string>('')
-  const [existingGalleryUrls, setExistingGalleryUrls] = useState<string[]>([])
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [toastVariant, setToastVariant] = useState<'success' | 'danger'>('success')
@@ -85,7 +79,6 @@ const EventsEdit = () => {
   // Upload loading states
   const [isUploadingPoster, setIsUploadingPoster] = useState(false)
   const [isUploadingVerticalPoster, setIsUploadingVerticalPoster] = useState(false)
-  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -200,8 +193,7 @@ const EventsEdit = () => {
         postalCode: event.location?.postalCode || '',
         latitude: event.location?.latitude ?? null,
         longitude: event.location?.longitude ?? null,
-        tagsInput: event.tags?.join(', ') || '',
-        homeSection: (event as any).homeSection || '',
+          homeSection: (event as any).homeSection || '',
       })
 
       // Set existing poster preview
@@ -220,11 +212,6 @@ const EventsEdit = () => {
       }
       if ((event as any).cloudflareVideoUid) {
         setCloudflareVideoUid((event as any).cloudflareVideoUid)
-      }
-
-      // Set existing gallery images
-      if (event.galleryImages && event.galleryImages.length > 0) {
-        setExistingGalleryUrls(event.galleryImages)
       }
 
       // Set seat types
@@ -269,7 +256,6 @@ const EventsEdit = () => {
       )
 
       setPoster(null)
-      setGalleryImages([])
     }
   }, [event, reset])
 
@@ -319,11 +305,6 @@ const EventsEdit = () => {
     }
   }
 
-  // Remove existing gallery image
-  const removeExistingGalleryImage = (index: number) => {
-    setExistingGalleryUrls(prev => prev.filter((_, i) => i !== index))
-  }
-
   const onSubmit = async (values: FormValues) => {
     if (!eventId) return
 
@@ -357,25 +338,6 @@ const EventsEdit = () => {
         }
         setIsUploadingVerticalPoster(false)
         setUploadProgress(30)
-      }
-
-      // Upload new gallery images
-      const galleryImageUrls: string[] = [...existingGalleryUrls]
-      if (galleryImages.length > 0) {
-        setIsUploadingGallery(true)
-        const progressPerImage = 30 / galleryImages.length
-        
-        for (let i = 0; i < galleryImages.length; i++) {
-          setUploadStatus(`Uploading gallery image ${i + 1} of ${galleryImages.length}...`)
-          try {
-            const url = await uploadSingle(galleryImages[i]).unwrap()
-            galleryImageUrls.push(url)
-          } catch (uploadErr) {
-            console.warn('Gallery upload failed for image', i)
-          }
-          setUploadProgress(30 + (i + 1) * progressPerImage)
-        }
-        setIsUploadingGallery(false)
       }
 
       setUploadProgress(60)
@@ -463,11 +425,6 @@ const EventsEdit = () => {
         },
         posterImage: posterImageUrl,
         verticalPoster: verticalPosterUrl,
-        galleryImages: galleryImageUrls,
-        tags: (values.tagsInput || '')
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
         performers: uploadedPerformers,
         organizers: uploadedOrganizers,
         homeSection: values.homeSection || '',
@@ -509,7 +466,7 @@ const EventsEdit = () => {
   }
 
   // Check if any upload is in progress
-  const isUploading = isUploadingPoster || isUploadingGallery || isLoading
+  const isUploading = isUploadingPoster || isLoading
 
   // Loading state
   if (isFetching) {
@@ -958,104 +915,6 @@ const EventsEdit = () => {
                       ))}
                     </select>
                   )}
-                </Col>
-              </Row>
-            </CardBody>
-          </Card>
-
-          {/* Gallery */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle as="h4">Gallery Images</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <Row>
-                <Col lg={12}>
-                  <label className="form-label">Upload New Gallery Images</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="form-control"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        const files = Array.from(e.target.files)
-                        setGalleryImages((prev: File[]) => [...prev, ...files])
-                      }
-                    }}
-                  />
-                </Col>
-              </Row>
-
-              {/* Existing Gallery Images */}
-              {existingGalleryUrls.length > 0 && (
-                <>
-                  <h6 className="mt-4 mb-3">Existing Gallery Images</h6>
-                  <Row>
-                    {existingGalleryUrls.map((url, index) => (
-                      <Col lg={3} md={4} sm={6} xs={12} key={`existing-${index}`} className="mb-3">
-                        <div className="position-relative border rounded p-2">
-                          <img
-                            src={url}
-                            alt={`gallery-${index}`}
-                            className="img-fluid rounded"
-                            style={{ height: '120px', objectFit: 'cover', width: '100%' }}
-                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://res.cloudinary.com/drulco0au/image/upload/v1770982075/ss_ldwhjh.png' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
-                            onClick={() => removeExistingGalleryImage(index)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </Col>
-                    ))}
-                  </Row>
-                </>
-              )}
-
-              {/* New Gallery Images Preview */}
-              {galleryImages.length > 0 && (
-                <>
-                  <h6 className="mt-4 mb-3">New Gallery Images</h6>
-                  <Row>
-                    {galleryImages.map((file: File, index: number) => (
-                      <Col lg={3} md={4} sm={6} xs={12} key={`new-${index}`} className="mb-3">
-                        <div className="position-relative border rounded p-2">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`new-gallery-${index}`}
-                            className="img-fluid rounded"
-                            style={{ height: '120px', objectFit: 'cover', width: '100%' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
-                            onClick={() => setGalleryImages((prev: File[]) => prev.filter((_, i) => i !== index))}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </Col>
-                    ))}
-                  </Row>
-                </>
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Tags */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle as="h4">Tags</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <Row>
-                <Col lg={6}>
-                  <label className="form-label">Tags (comma separated)</label>
-                  <input type="text" className="form-control" {...register('tagsInput')} placeholder="e.g. music, festival, comedy" />
                 </Col>
               </Row>
             </CardBody>

@@ -11,7 +11,6 @@ import { Button, Card, CardBody, CardHeader, CardTitle, Col, Container, Row, Spi
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
-import Image from 'next/image'
 import CloudflareVideoUploader from '@/components/CloudflareVideoUploader'
 
 // Seat Type Interface
@@ -45,7 +44,6 @@ const schema = yup.object().shape({
   totalSeats: yup.number().typeError('Enter valid number').required('Total seats required'),
   availableSeats: yup.number().typeError('Enter valid number').required('Available seats required'),
   maxTicketsPerPerson: yup.number().typeError('Enter valid number').default(10),
-  tagsInput: yup.string().required('Tags required'),
   homeSection: yup.string().oneOf(['', 'trending_events', 'celebrity_events', 'exclusive_invite_only', 'near_you']).optional(),
   isScheduled: yup.boolean().default(false),
   visibleFrom: yup.string().when('isScheduled', {
@@ -64,10 +62,8 @@ const schema = yup.object().shape({
 
 type FormValues = yup.InferType<typeof schema> & {
   posterImage?: string
-  galleryImages?: string[]
   performers?: string[]
   organizers?: string[]
-  tags?: string[]
   seatTypes?: ISeatType[]
   homeSection?: string
 }
@@ -75,7 +71,6 @@ type FormValues = yup.InferType<typeof schema> & {
 const EventsAdd = () => {
   const [poster, setPoster] = useState<File | null>(null)
   const [verticalPoster, setVerticalPoster] = useState<File | null>(null)
-  const [galleryImages, setGalleryImages] = useState<File[]>([])
   const [videoUrl, setVideoUrl] = useState('')
   const [cloudflareVideoUid, setCloudflareVideoUid] = useState('')
   const router = useRouter()
@@ -88,7 +83,6 @@ const EventsAdd = () => {
   // Upload loading states
   const [isUploadingPoster, setIsUploadingPoster] = useState(false)
   const [isUploadingVerticalPoster, setIsUploadingVerticalPoster] = useState(false)
-  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -230,25 +224,6 @@ const EventsAdd = () => {
         setUploadProgress(30)
       }
 
-      // Upload gallery images
-      const galleryImageUrls: string[] = []
-      if (galleryImages.length > 0) {
-        setIsUploadingGallery(true)
-        const progressPerImage = 40 / galleryImages.length
-        
-        for (let i = 0; i < galleryImages.length; i++) {
-          setUploadStatus(`Uploading gallery image ${i + 1} of ${galleryImages.length}...`)
-          try {
-            const url = await uploadSingle(galleryImages[i]).unwrap()
-            galleryImageUrls.push(url)
-          } catch (uploadErr) {
-            galleryImageUrls.push(URL.createObjectURL(galleryImages[i]))
-          }
-          setUploadProgress(30 + (i + 1) * progressPerImage)
-        }
-        setIsUploadingGallery(false)
-      }
-
       setUploadProgress(70)
       setUploadStatus('Creating event...')
 
@@ -274,7 +249,6 @@ const EventsAdd = () => {
         verticalPoster: verticalPosterUrl,
         videoUrl: videoUrl,
         cloudflareVideoUid: cloudflareVideoUid,
-        galleryImages: galleryImageUrls,
         seatTypes: validSeatTypes,
         eventCategories: selectedParticipationType ? [selectedParticipationType] : [],
         performers: performers.filter(p => p.name.trim() !== '').map((p) => ({
@@ -289,10 +263,6 @@ const EventsAdd = () => {
           phone: o.phone,
           logo: o.logo ? URL.createObjectURL(o.logo) : '',
         })),
-        tags: values.tagsInput
-          .split(',')
-          .map((t: string) => t.trim())
-          .filter((t: string) => t.length > 0),
         isActive: true,
         homeSection: values.homeSection || '',
         isGovernmentEvent: values.isGovernmentEvent || false, // Government events have fixed 10% platform fee
@@ -312,7 +282,6 @@ const EventsAdd = () => {
       reset()
       setPoster(null)
       setVerticalPoster(null)
-      setGalleryImages([])
       setVideoUrl('')
       setCloudflareVideoUid('')
       setSeatTypes([{ name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }])
@@ -330,7 +299,7 @@ const EventsAdd = () => {
   }
 
   // Check if any upload is in progress
-  const isUploading = isUploadingPoster || isUploadingGallery || isLoading
+  const isUploading = isUploadingPoster || isLoading
 
   return (
     <>
@@ -758,72 +727,6 @@ const EventsAdd = () => {
                       ))}
                     </select>
                   )}
-                </Col>
-              </Row>
-            </CardBody>
-          </Card>
-
-          {/* Gallery */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle as="h4">Upload Gallery</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <Row>
-                <Col lg={12}>
-                  <label className="form-label">Upload Gallery Images</label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="form-control"
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        const files = Array.from(e.target.files)
-                        setGalleryImages((prev: File[]) => [...prev, ...files])
-                      }
-                    }}
-                  />
-                </Col>
-              </Row>
-
-              {/* Preview */}
-              <Row className="mt-3">
-                {galleryImages.map((file: File, index: number) => (
-                  <Col lg={3} md={4} sm={6} xs={12} key={index} className="mb-3">
-                    <div className="position-relative border rounded p-2">
-                      <Image
-                        width={500}
-                        height={500}
-                        src={URL.createObjectURL(file)}
-                        alt={`gallery-${index}`}
-                        className="img-fluid rounded"
-                        style={{ height: '150px', objectFit: 'cover', width: '100%' }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
-                        onClick={() => setGalleryImages((prev: File[]) => prev.filter((_, i) => i !== index))}>
-                        ✕
-                      </button>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            </CardBody>
-          </Card>
-
-          {/* Tags */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle as="h4">Tags</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <Row>
-                <Col lg={6}>
-                  <label className="form-label">Tags (comma separated)</label>
-                  <input type="text" className="form-control" {...register('tagsInput')} placeholder="e.g. music, festival, comedy" />
-                  {errors.tagsInput && <small className="text-danger">{errors.tagsInput.message}</small>}
                 </Col>
               </Row>
             </CardBody>
