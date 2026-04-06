@@ -2,7 +2,6 @@
 
 import { useCreateEventsMutation } from '@/store/eventsApi'
 import { useGetEventCategoriesQuery, IEventCategory } from '@/store/eventCategoryApi'
-import { useGetActiveParticipationTypesQuery } from '@/store/eventParticipationTypeApi'
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -93,7 +92,6 @@ const EventsAdd = () => {
 
   // Event Categories (Participation Types) - single selection from admin-managed list
   const [selectedParticipationType, setSelectedParticipationType] = useState<string>('')
-  const { data: participationTypeOptions = [], isLoading: participationTypesLoading } = useGetActiveParticipationTypesQuery()
 
   // Fetch event categories (for category dropdown)
   const { data: eventCategoriesData = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
@@ -700,33 +698,20 @@ const EventsAdd = () => {
           {/* Event Categories (Participation Types) */}
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle as="h4">Event Participation Type</CardTitle>
-              <small className="text-muted">Select the participation type for this event (managed by admin)</small>
+              <CardTitle as="h4">Participation Type</CardTitle>
             </CardHeader>
             <CardBody>
               <Row>
                 <Col lg={6}>
-                  <label className="form-label fw-medium">
-                    Participation Type <span className="text-danger">*</span>
-                  </label>
-                  {participationTypesLoading ? (
-                    <div className="text-muted">Loading types...</div>
-                  ) : participationTypeOptions.length === 0 ? (
-                    <div className="alert alert-warning py-2">
-                      <small>No participation types found. Please ask admin to create them from <strong>Events → Participation Types</strong>.</small>
-                    </div>
-                  ) : (
-                    <select
-                      className="form-select"
-                      value={selectedParticipationType}
-                      onChange={(e) => setSelectedParticipationType(e.target.value)}
-                    >
-                      <option value="">— Select a participation type —</option>
-                      {participationTypeOptions.map((opt) => (
-                        <option key={opt._id} value={opt.name}>{opt.name}</option>
-                      ))}
-                    </select>
-                  )}
+                  <label className="form-label fw-medium">Participation Type</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={selectedParticipationType}
+                    onChange={(e) => setSelectedParticipationType(e.target.value)}
+                    placeholder="e.g. Ticket Booking, VIP Guest, Sponsor, Participant"
+                  />
+                  <small className="text-muted">Enter the participation type for this event</small>
                 </Col>
               </Row>
             </CardBody>
