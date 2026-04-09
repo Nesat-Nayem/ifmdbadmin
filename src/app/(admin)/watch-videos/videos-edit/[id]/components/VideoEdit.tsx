@@ -123,6 +123,7 @@ interface IEpisode {
   title: string
   description: string
   videoUrl: string
+  downloadUrl: string
   thumbnailUrl: string
   duration: number
   isFree: boolean
@@ -238,7 +239,7 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
       setCountryPricing(video.countryPricing || [])
       setCast(video.cast || [])
       setCrew(video.crew || [])
-      setSeasons(video.seasons || [])
+      setSeasons(JSON.parse(JSON.stringify(video.seasons || [])))
     }
   }, [video, reset])
 
@@ -336,28 +337,32 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
   }
 
   const addEpisode = (seasonIndex: number) => {
-    const updated = [...seasons]
+    const updated = JSON.parse(JSON.stringify(seasons))
     const episodeNum = updated[seasonIndex].episodes.length + 1
-    updated[seasonIndex].episodes.push({
-      episodeNumber: episodeNum,
-      title: `Episode ${episodeNum}`,
-      description: '',
-      videoUrl: '',
-      thumbnailUrl: '',
-      duration: 0,
-      isFree: false,
-      price: 0,
-      isActive: true
-    })
+    updated[seasonIndex].episodes = [
+      ...updated[seasonIndex].episodes,
+      {
+        episodeNumber: episodeNum,
+        title: `Episode ${episodeNum}`,
+        description: '',
+        videoUrl: '',
+        downloadUrl: '',
+        thumbnailUrl: '',
+        duration: 0,
+        isFree: false,
+        price: 0,
+        isActive: true
+      }
+    ]
     setSeasons(updated)
   }
   const removeEpisode = (seasonIndex: number, episodeIndex: number) => {
-    const updated = [...seasons]
-    updated[seasonIndex].episodes = updated[seasonIndex].episodes.filter((_, i) => i !== episodeIndex)
+    const updated = JSON.parse(JSON.stringify(seasons))
+    updated[seasonIndex].episodes = updated[seasonIndex].episodes.filter((_: any, i: number) => i !== episodeIndex)
     setSeasons(updated)
   }
   const updateEpisode = (seasonIndex: number, episodeIndex: number, field: keyof IEpisode, value: any) => {
-    const updated = [...seasons]
+    const updated = JSON.parse(JSON.stringify(seasons))
     updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
     setSeasons(updated)
   }
@@ -1121,6 +1126,10 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                                   <CloudflareVideoUploader
                                     onUploadComplete={(uid: string, url: string) => {
                                       updateEpisode(sIndex, eIndex, 'videoUrl', url)
+                                      const cfCode = url.match(/customer-([^.]+)\.cloudflarestream/)?.[1]
+                                      if (cfCode && uid) {
+                                        updateEpisode(sIndex, eIndex, 'downloadUrl', `https://customer-${cfCode}.cloudflarestream.com/${uid}/downloads/default.mp4`)
+                                      }
                                     }}
                                     uploadType="main"
                                     existingUid=""
@@ -1128,7 +1137,12 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                                 </Col>
                                 <Col md={4}>
                                   {episode.videoUrl && (
-                                    <small className="text-success">✅ Video uploaded</small>
+                                    <div>
+                                      <small className="text-success d-block">✅ Video uploaded</small>
+                                      {episode.downloadUrl && (
+                                        <small className="text-muted d-block text-truncate" style={{ maxWidth: 200 }} title={episode.downloadUrl}>⬇️ {episode.downloadUrl.substring(0, 40)}...</small>
+                                      )}
+                                    </div>
                                   )}
                                 </Col>
                               </Row>
