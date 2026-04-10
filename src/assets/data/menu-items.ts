@@ -85,7 +85,7 @@ export const MENU_ITEMS: MenuItemType[] = [
     icon: 'bx:movie',
     label: 'Film Trade',
     allowedRoles: ['admin', 'vendor'],
-    allowedServices: ['film_trade', 'movie_watch'],
+    allowedServices: ['film_trade'],
     children: [
       {
         key: 'movies-category-add',
