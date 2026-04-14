@@ -1406,7 +1406,8 @@ const WatchVideosAdd = () => {
                                     onUploadComplete={(uid: string, url: string) => {
                                       updateEpisode(sIndex, eIndex, 'videoUrl', url)
                                     }}
-                                    uploadType="main"
+                                    uploadType="episode"
+                                    videoType="series"
                                     existingUid=""
                                   />
                                 </Col>

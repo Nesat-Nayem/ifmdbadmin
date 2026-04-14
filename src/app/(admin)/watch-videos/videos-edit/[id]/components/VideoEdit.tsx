@@ -1131,7 +1131,8 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
                                         updateEpisode(sIndex, eIndex, 'downloadUrl', `https://customer-${cfCode}.cloudflarestream.com/${uid}/downloads/default.mp4`)
                                       }
                                     }}
-                                    uploadType="main"
+                                    uploadType="episode"
+                                    videoType="series"
                                     existingUid=""
                                   />
                                 </Col>

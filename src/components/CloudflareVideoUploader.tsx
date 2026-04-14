@@ -8,7 +8,7 @@ import * as tus from 'tus-js-client'
 
 interface CloudflareVideoUploaderProps {
   onUploadComplete: (uid: string, embedUrl: string) => void
-  uploadType?: 'main' | 'trailer'
+  uploadType?: 'main' | 'trailer' | 'episode'
   videoType?: 'single' | 'series'
   existingUid?: string
   maxDurationSeconds?: number
@@ -107,9 +107,9 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
   }
 
   const getMaxAllowedBytes = () => {
-    if (uploadType === 'trailer') return 100 * 1024 * 1024
-    if (videoType === 'series') return 500 * 1024 * 1024
-    return 2 * 1024 * 1024 * 1024
+    if (uploadType === 'trailer') return 100 * 1024 * 1024       // 100 MB
+    if (uploadType === 'episode') return 500 * 1024 * 1024       // 500 MB
+    return 2 * 1024 * 1024 * 1024                                 // 2 GB (main video)
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,7 +415,7 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
           <FaCloudUploadAlt size={48} className="text-muted mb-3" />
           <h5 className="mb-2">Drag & drop your video here</h5>
           <p className="text-muted small mb-0">
-            or click to browse • MP4, WebM, MOV, AVI, MKV • Max 30GB
+            or click to browse • MP4, WebM, MOV, AVI, MKV • Max {formatBytes(getMaxAllowedBytes())}
           </p>
         </div>
       )}
