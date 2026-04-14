@@ -362,9 +362,11 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
     setSeasons(updated)
   }
   const updateEpisode = (seasonIndex: number, episodeIndex: number, field: keyof IEpisode, value: any) => {
-    const updated = JSON.parse(JSON.stringify(seasons))
-    updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
-    setSeasons(updated)
+    setSeasons(prev => {
+      const updated = JSON.parse(JSON.stringify(prev))
+      updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
+      return updated
+    })
   }
 
   // Image upload handlers with loading state
@@ -390,6 +392,19 @@ const VideoEdit: React.FC<VideoEditProps> = ({ videoId }) => {
 
   const onSubmit = async (values: FormValues) => {
     console.log('Form submitted with values:', values)
+
+    if (values.videoType === 'series') {
+      const missingVideo = seasons.some(s =>
+        s.episodes.some((ep: any) => !ep.videoUrl)
+      )
+      if (missingVideo) {
+        setToastMessage('Some episodes are missing a video. Please wait for all uploads to complete before saving.')
+        setToastVariant('danger')
+        setShowToast(true)
+        return
+      }
+    }
+
     setIsSubmitting(true)
     
     try {

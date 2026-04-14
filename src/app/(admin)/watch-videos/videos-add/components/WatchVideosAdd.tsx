@@ -390,13 +390,27 @@ const WatchVideosAdd = () => {
     setSeasons(updated)
   }
   const updateEpisode = (seasonIndex: number, episodeIndex: number, field: keyof IEpisode, value: any) => {
-    const updated = [...seasons]
-    updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
-    setSeasons(updated)
+    setSeasons(prev => {
+      const updated = JSON.parse(JSON.stringify(prev))
+      updated[seasonIndex].episodes[episodeIndex] = { ...updated[seasonIndex].episodes[episodeIndex], [field]: value }
+      return updated
+    })
   }
 
   // Submit handler
   const onSubmit = async (values: FormValues) => {
+    if (values.videoType === 'series') {
+      const missingVideo = seasons.some(s =>
+        s.episodes.some((ep: any) => !ep.videoUrl)
+      )
+      if (missingVideo) {
+        setToastMessage('Some episodes are missing a video. Please wait for all uploads to complete before saving.')
+        setToastVariant('danger')
+        setShowToast(true)
+        return
+      }
+    }
+
     try {
       // Upload images
       let thumbnailUrl = ''

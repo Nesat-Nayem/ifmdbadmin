@@ -37,6 +37,17 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
   const uploadRef = useRef<tus.Upload | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastProgress = useRef<{ time: number; bytes: number }>({ time: 0, bytes: 0 })
+  const customerCodeRef = useRef(customerCode)
+  const onUploadCompleteRef = useRef(onUploadComplete)
+
+  // Keep refs in sync so interval callbacks always see latest values
+  useEffect(() => {
+    customerCodeRef.current = customerCode
+  }, [customerCode])
+
+  useEffect(() => {
+    onUploadCompleteRef.current = onUploadComplete
+  }, [onUploadComplete])
 
   // Fetch Cloudflare config on mount
   useEffect(() => {
@@ -72,12 +83,13 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
             
             if (data.data.readyToStream) {
               setUploadStatus('completed')
-              const embedUrl = `https://customer-${customerCode}.cloudflarestream.com/${videoUid}/iframe`
-              onUploadComplete(videoUid, embedUrl)
+              const code = customerCodeRef.current
+              const embedUrl = `https://customer-${code}.cloudflarestream.com/${videoUid}/iframe`
+              onUploadCompleteRef.current(videoUid, embedUrl)
               clearInterval(interval)
             }
             
-            if (data.data.errorReasonCode) {
+            if (data.data.errorReasonCode && data.data.errorReasonCode !== '') {
               setUploadStatus('error')
               setErrorMessage(data.data.errorReasonText || 'Video processing failed')
               clearInterval(interval)
@@ -90,7 +102,7 @@ const CloudflareVideoUploader: React.FC<CloudflareVideoUploaderProps> = ({
     }
 
     return () => clearInterval(interval)
-  }, [uploadStatus, videoUid, customerCode, onUploadComplete])
+  }, [uploadStatus, videoUid])
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
