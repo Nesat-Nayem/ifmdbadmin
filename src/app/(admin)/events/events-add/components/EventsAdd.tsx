@@ -2,6 +2,8 @@
 
 import { useCreateEventsMutation } from '@/store/eventsApi'
 import { useGetEventCategoriesQuery, IEventCategory } from '@/store/eventCategoryApi'
+import { useGetActiveParticipationTypesQuery } from '@/store/eventParticipationTypeApi'
+import { useGetActiveEventTypesQuery } from '@/store/eventTypeApi'
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -95,6 +97,10 @@ const EventsAdd = () => {
 
   // Fetch event categories (for category dropdown)
   const { data: eventCategoriesData = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
+  // Fetch admin-managed active participation types for the select dropdown
+  const { data: participationTypes = [], isLoading: participationTypesLoading } = useGetActiveParticipationTypesQuery()
+  // Fetch admin-managed active event types for the Event Type select dropdown
+  const { data: eventTypes = [], isLoading: eventTypesLoading } = useGetActiveEventTypesQuery()
   const [uploadSingle] = useUploadSingleMutation()
 
   const {
@@ -358,21 +364,29 @@ const EventsAdd = () => {
                   {errors.description && <small className="text-danger">{errors.description.message}</small>}
                 </Col>
 
-                {/* Event Type */}
+                {/* Event Type (admin-managed via Events → Event Types CRUD) */}
                 <Col lg={6} className="mt-3">
                   <label className="form-label">Event Type *</label>
-                  <select {...register('eventType')} className="form-select">
-                    <option value="">-- Select --</option>
-                    <option value="comedy">Comedy</option>
-                    <option value="music">Music</option>
-                    <option value="concert">Concert</option>
-                    <option value="theater">Theater</option>
-                    <option value="sports">Sports</option>
-                    <option value="conference">Conference</option>
-                    <option value="workshop">Workshop</option>
-                    <option value="other">Other</option>
+                  <select
+                    {...register('eventType')}
+                    className="form-select"
+                    disabled={eventTypesLoading}
+                  >
+                    <option value="">
+                      {eventTypesLoading ? 'Loading...' : '-- Select --'}
+                    </option>
+                    {eventTypes.map((et) => (
+                      <option key={et._id} value={et.title}>
+                        {et.title}
+                      </option>
+                    ))}
                   </select>
-                  {errors.eventType && <small className="text-danger">{errors.eventType.message}</small>}
+                  {eventTypes.length === 0 && !eventTypesLoading && (
+                    <small className="text-muted">
+                      No event types found. Admin can add them in <strong>Events → Event Types</strong>.
+                    </small>
+                  )}
+                  {errors.eventType && <small className="text-danger d-block">{errors.eventType.message}</small>}
                 </Col>
 
                 <Col lg={6} className="mt-3">
@@ -704,14 +718,26 @@ const EventsAdd = () => {
               <Row>
                 <Col lg={6}>
                   <label className="form-label fw-medium">Participation Type</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <select
+                    className="form-select"
                     value={selectedParticipationType}
                     onChange={(e) => setSelectedParticipationType(e.target.value)}
-                    placeholder="e.g. Ticket Booking, VIP Guest, Sponsor, Participant"
-                  />
-                  <small className="text-muted">Enter the participation type for this event</small>
+                    disabled={participationTypesLoading}
+                  >
+                    <option value="">
+                      {participationTypesLoading ? 'Loading...' : '-- Select Participation Type --'}
+                    </option>
+                    {participationTypes.map((pt) => (
+                      <option key={pt._id} value={pt.name}>
+                        {pt.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="text-muted">
+                    {participationTypes.length === 0 && !participationTypesLoading
+                      ? 'No participation types found. Ask admin to add them in Events → Participation Types.'
+                      : 'Select the participation type for this event'}
+                  </small>
                 </Col>
               </Row>
             </CardBody>

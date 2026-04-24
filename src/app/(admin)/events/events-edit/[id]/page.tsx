@@ -2,6 +2,8 @@
 
 import { useGetEventsByIdQuery, useUpdateEventsMutation, IEvents, ISeatType } from '@/store/eventsApi'
 import { useGetEventCategoriesQuery, IEventCategory } from '@/store/eventCategoryApi'
+import { useGetActiveParticipationTypesQuery } from '@/store/eventParticipationTypeApi'
+import { useGetActiveEventTypesQuery } from '@/store/eventTypeApi'
 import { useUploadSingleMutation } from '@/store/uploadApi'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -90,6 +92,10 @@ const EventsEdit = () => {
 
   // Fetch event categories
   const { data: eventCategories = [], isLoading: categoriesLoading } = useGetEventCategoriesQuery()
+  // Fetch admin-managed active participation types for the select dropdown
+  const { data: participationTypes = [], isLoading: participationTypesLoading } = useGetActiveParticipationTypesQuery()
+  // Fetch admin-managed active event types for the Event Type select dropdown
+  const { data: eventTypes = [], isLoading: eventTypesLoading } = useGetActiveEventTypesQuery()
   const [uploadSingle] = useUploadSingleMutation()
 
   const handlePosterChange = (file: File | null) => {
@@ -588,20 +594,35 @@ const EventsEdit = () => {
                   {errors.description && <div className="invalid-feedback">{errors.description.message}</div>}
                 </Col>
 
-                {/* Event Type */}
+                {/* Event Type (admin-managed via Events → Event Types CRUD) */}
                 <Col lg={6} className="mt-3">
                   <label className="form-label">Event Type *</label>
-                  <select {...register('eventType')} className={`form-select ${errors.eventType ? 'is-invalid' : ''}`}>
-                    <option value="">-- Select --</option>
-                    <option value="comedy">Comedy</option>
-                    <option value="music">Music</option>
-                    <option value="concert">Concert</option>
-                    <option value="theater">Theater</option>
-                    <option value="sports">Sports</option>
-                    <option value="conference">Conference</option>
-                    <option value="workshop">Workshop</option>
-                    <option value="other">Other</option>
+                  <select
+                    {...register('eventType')}
+                    className={`form-select ${errors.eventType ? 'is-invalid' : ''}`}
+                    disabled={eventTypesLoading}
+                  >
+                    <option value="">
+                      {eventTypesLoading ? 'Loading...' : '-- Select --'}
+                    </option>
+                    {/* Preserve the saved event type value even if it was later deactivated/removed */}
+                    {watch('eventType') &&
+                      !eventTypes.some((et) => et.title === watch('eventType')) && (
+                        <option value={watch('eventType')}>
+                          {watch('eventType')} (current)
+                        </option>
+                      )}
+                    {eventTypes.map((et) => (
+                      <option key={et._id} value={et.title}>
+                        {et.title}
+                      </option>
+                    ))}
                   </select>
+                  {eventTypes.length === 0 && !eventTypesLoading && (
+                    <small className="text-muted d-block mt-1">
+                      No event types found. Admin can add them in <strong>Events → Event Types</strong>.
+                    </small>
+                  )}
                   {errors.eventType && <div className="invalid-feedback">{errors.eventType.message}</div>}
                 </Col>
 
@@ -891,14 +912,33 @@ const EventsEdit = () => {
               <Row>
                 <Col lg={6}>
                   <label className="form-label fw-medium">Participation Type</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <select
+                    className="form-select"
                     value={selectedParticipationType}
                     onChange={(e) => setSelectedParticipationType(e.target.value)}
-                    placeholder="e.g. Ticket Booking, VIP Guest, Sponsor, Participant"
-                  />
-                  <small className="text-muted">Enter the participation type for this event</small>
+                    disabled={participationTypesLoading}
+                  >
+                    <option value="">
+                      {participationTypesLoading ? 'Loading...' : '-- Select Participation Type --'}
+                    </option>
+                    {/* Ensure the previously-saved value is always visible even if it was later deactivated/removed */}
+                    {selectedParticipationType &&
+                      !participationTypes.some((pt) => pt.name === selectedParticipationType) && (
+                        <option value={selectedParticipationType}>
+                          {selectedParticipationType} (current)
+                        </option>
+                      )}
+                    {participationTypes.map((pt) => (
+                      <option key={pt._id} value={pt.name}>
+                        {pt.name}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="text-muted">
+                    {participationTypes.length === 0 && !participationTypesLoading
+                      ? 'No participation types found. Ask admin to add them in Events → Participation Types.'
+                      : 'Select the participation type for this event'}
+                  </small>
                 </Col>
               </Row>
             </CardBody>

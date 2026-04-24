@@ -1,6 +1,15 @@
 'use client'
 
-import { useGetVendorApplicationsQuery, useApproveVendorApplicationMutation, useRejectVendorApplicationMutation, useDeleteVendorApplicationMutation, IVendorApplication } from '@/store/vendorApi'
+import {
+  useGetVendorApplicationsQuery,
+  useApproveVendorApplicationMutation,
+  useRejectVendorApplicationMutation,
+  useDeleteVendorApplicationMutation,
+  useBlockVendorApplicationMutation,
+  useUnblockVendorApplicationMutation,
+  IVendorApplication,
+  IVendorUserPopulated,
+} from '@/store/vendorApi'
 import React, { useState, useMemo } from 'react'
 import { Button, Card, CardBody, CardHeader, CardTitle, Container, Badge, Modal, Spinner, Table, Form, InputGroup, Row, Col } from 'react-bootstrap'
 import { Toast, ToastContainer } from 'react-bootstrap'
@@ -30,16 +39,28 @@ const VendorApplicationsList = ({ status }: Props) => {
   const [approveApp] = useApproveVendorApplicationMutation()
   const [rejectApp] = useRejectVendorApplicationMutation()
   const [deleteApp] = useDeleteVendorApplicationMutation()
+  const [blockApp] = useBlockVendorApplicationMutation()
+  const [unblockApp] = useUnblockVendorApplicationMutation()
   
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastVariant, setToastVariant] = useState<'success' | 'danger'>('success')
   
   const [viewModal, setViewModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
+  const [approveModal, setApproveModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
   const [rejectModal, setRejectModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
+  const [blockModal, setBlockModal] = useState<{ show: boolean; app: IVendorApplication | null }>({ show: false, app: null })
   const [rejectionReason, setRejectionReason] = useState('')
+  const [blockReason, setBlockReason] = useState('')
   const [processing, setProcessing] = useState(false)
+
+  // Helper: read the populated user (server populates vendorUserId with block state)
+  const getVendorUser = (app: IVendorApplication | null): IVendorUserPopulated | null => {
+    if (!app || !app.vendorUserId) return null
+    return typeof app.vendorUserId === 'string' ? null : (app.vendorUserId as IVendorUserPopulated)
+  }
+  const isBlocked = (app: IVendorApplication | null): boolean => !!getVendorUser(app)?.isBlocked
 
   const showMessage = (msg: string, type: 'success' | 'danger' = 'success') => {
     setToastMessage(msg)
@@ -47,11 +68,13 @@ const VendorApplicationsList = ({ status }: Props) => {
     setShowToast(true)
   }
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async () => {
+    if (!approveModal.app) return
     setProcessing(true)
     try {
-      await approveApp(id).unwrap()
+      await approveApp(approveModal.app._id).unwrap()
       showMessage('Application approved! Credentials sent to vendor email.')
+      setApproveModal({ show: false, app: null })
       setViewModal({ show: false, app: null })
     } catch (err: any) {
       showMessage(err?.data?.message || 'Failed to approve', 'danger')
@@ -69,6 +92,31 @@ const VendorApplicationsList = ({ status }: Props) => {
       setRejectionReason('')
     } catch (err: any) {
       showMessage(err?.data?.message || 'Failed to reject', 'danger')
+    }
+    setProcessing(false)
+  }
+
+  const handleBlock = async () => {
+    if (!blockModal.app) return
+    setProcessing(true)
+    try {
+      await blockApp({ id: blockModal.app._id, reason: blockReason.trim() }).unwrap()
+      showMessage('Vendor blocked. Their content is now hidden and they cannot log in.')
+      setBlockModal({ show: false, app: null })
+      setBlockReason('')
+    } catch (err: any) {
+      showMessage(err?.data?.message || 'Failed to block vendor', 'danger')
+    }
+    setProcessing(false)
+  }
+
+  const handleUnblock = async (app: IVendorApplication) => {
+    setProcessing(true)
+    try {
+      await unblockApp(app._id).unwrap()
+      showMessage('Vendor unblocked. Their content and login are restored.')
+    } catch (err: any) {
+      showMessage(err?.data?.message || 'Failed to unblock vendor', 'danger')
     }
     setProcessing(false)
   }
@@ -177,22 +225,52 @@ const VendorApplicationsList = ({ status }: Props) => {
                           <span className="text-muted">Free</span>
                         )}
                       </td>
-                      <td>{getStatusBadge(app.status)}</td>
+                      <td>
+                        {getStatusBadge(app.status)}
+                        {isBlocked(app) && (
+                          <Badge bg="dark" className="ms-1" title={getVendorUser(app)?.blockedReason || 'Blocked'}>
+                            BLOCKED
+                          </Badge>
+                        )}
+                      </td>
                       <td><small>{new Date(app.createdAt).toLocaleDateString()}</small></td>
                       <td>
-                        <div className="d-flex gap-1">
+                        <div className="d-flex gap-1 flex-wrap">
                           <Button size="sm" variant="outline-primary" onClick={() => setViewModal({ show: true, app })}>
                             View
                           </Button>
                           {app.status === 'pending' && (
                             <>
-                              <Button size="sm" variant="success" onClick={() => handleApprove(app._id)} disabled={processing}>
+                              <Button size="sm" variant="success" onClick={() => setApproveModal({ show: true, app })} disabled={processing} title="Approve">
                                 ✓
                               </Button>
                               <Button size="sm" variant="danger" onClick={() => setRejectModal({ show: true, app })}>
                                 ✕
                               </Button>
                             </>
+                          )}
+                          {app.status === 'approved' && (
+                            isBlocked(app) ? (
+                              <Button
+                                size="sm"
+                                variant="outline-success"
+                                onClick={() => handleUnblock(app)}
+                                disabled={processing}
+                                title="Unblock vendor"
+                              >
+                                Unblock
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline-warning"
+                                onClick={() => { setBlockReason(''); setBlockModal({ show: true, app }) }}
+                                disabled={processing}
+                                title="Block vendor"
+                              >
+                                Block
+                              </Button>
+                            )
                           )}
                           <Button size="sm" variant="outline-danger" onClick={() => setDeleteModal({ show: true, app })} title="Delete">
                             🗑️
@@ -259,12 +337,46 @@ const VendorApplicationsList = ({ status }: Props) => {
               <Button variant="danger" onClick={() => { setViewModal({ show: false, app: null }); setRejectModal({ show: true, app: viewModal.app }); }}>
                 Reject
               </Button>
-              <Button variant="success" onClick={() => handleApprove(viewModal.app!._id)} disabled={processing}>
-                {processing ? 'Approving...' : 'Approve & Send Credentials'}
+              <Button
+                variant="success"
+                onClick={() => { const app = viewModal.app; setViewModal({ show: false, app: null }); setApproveModal({ show: true, app }); }}
+                disabled={processing}
+              >
+                Approve & Send Credentials
               </Button>
             </>
           )}
           <Button variant="secondary" onClick={() => setViewModal({ show: false, app: null })}>Close</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Approve Confirmation Modal */}
+      <Modal show={approveModal.show} onHide={() => !processing && setApproveModal({ show: false, app: null })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Approve Application</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {approveModal.app && (
+            <div>
+              <p>
+                Are you sure you want to approve <strong>{approveModal.app.vendorName}</strong>
+                {approveModal.app.email ? <> (<small>{approveModal.app.email}</small>)</> : null}?
+              </p>
+              <ul className="mb-0">
+                <li>A vendor account will be created (if not already).</li>
+                <li>Login credentials will be emailed to the vendor.</li>
+                <li>Their content will become visible on the frontend.</li>
+              </ul>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setApproveModal({ show: false, app: null })} disabled={processing}>
+            Cancel
+          </Button>
+          <Button variant="success" onClick={handleApprove} disabled={processing}>
+            {processing ? 'Approving...' : 'Yes, Approve & Send Credentials'}
+          </Button>
         </Modal.Footer>
       </Modal>
 
@@ -283,6 +395,43 @@ const VendorApplicationsList = ({ status }: Props) => {
           <Button variant="secondary" onClick={() => setRejectModal({ show: false, app: null })}>Cancel</Button>
           <Button variant="danger" onClick={handleReject} disabled={processing || !rejectionReason}>
             {processing ? 'Rejecting...' : 'Reject Application'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Block Confirmation Modal */}
+      <Modal show={blockModal.show} onHide={() => setBlockModal({ show: false, app: null })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Block Vendor</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {blockModal.app && (
+            <div>
+              <p>
+                You are about to block <strong>{blockModal.app.vendorName}</strong> (
+                <small>{blockModal.app.email}</small>). While blocked:
+              </p>
+              <ul className="mb-3">
+                <li>All of their <strong>Events</strong>, <strong>Film Trade</strong> and <strong>Watch Movie</strong> content will be hidden from the frontend.</li>
+                <li>They will <strong>not be able to log in</strong> to the admin panel.</li>
+              </ul>
+              <Form.Group>
+                <Form.Label>Reason (optional, shown to the vendor at login)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="e.g. Repeated policy violations"
+                />
+              </Form.Group>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setBlockModal({ show: false, app: null })} disabled={processing}>Cancel</Button>
+          <Button variant="warning" onClick={handleBlock} disabled={processing}>
+            {processing ? 'Blocking...' : 'Block Vendor'}
           </Button>
         </Modal.Footer>
       </Modal>

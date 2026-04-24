@@ -138,13 +138,20 @@ export const MENU_ITEMS: MenuItemType[] = [
         parentKey: 'events',
         allowedRoles: ['admin'],
       },
-      // {
-      //   key: 'events-participation-types',
-      //   label: 'Participation Types',
-      //   url: '/events/participation-types',
-      //   parentKey: 'events',
-      //   allowedRoles: ['admin'],
-      // },
+      {
+        key: 'events-participation-types',
+        label: 'Participation Types',
+        url: '/events/participation-types',
+        parentKey: 'events',
+        allowedRoles: ['admin'],
+      },
+      {
+        key: 'events-event-types',
+        label: 'Event Types',
+        url: '/events/event-types',
+        parentKey: 'events',
+        allowedRoles: ['admin'],
+      },
       {
         key: 'events-list-add',
         label: 'Add Event',

@@ -43,6 +43,17 @@ export interface IPaymentInfo {
   paidAt?: string
 }
 
+export interface IVendorUserPopulated {
+  _id: string
+  name?: string
+  email?: string
+  phone?: string
+  role?: string
+  isBlocked?: boolean
+  blockedAt?: string
+  blockedReason?: string
+}
+
 export interface IVendorApplication {
   _id: string
   userId?: string
@@ -66,7 +77,8 @@ export interface IVendorApplication {
   totalAmount: number
   status: 'pending' | 'approved' | 'rejected'
   rejectionReason?: string
-  vendorUserId?: string
+  // Populated linked User account (when present) so admin UI can show block state
+  vendorUserId?: string | IVendorUserPopulated
   approvedAt?: string
   createdAt: string
   updatedAt: string
@@ -197,6 +209,27 @@ export const vendorApi = createApi({
       }),
       invalidatesTags: ['VendorApplication'],
     }),
+
+    // Block a vendor — disables their login and hides their events/movies/videos on the frontend
+    blockVendorApplication: builder.mutation<{ application: IVendorApplication; vendorUser: IVendorUserPopulated }, { id: string; reason?: string }>({
+      query: ({ id, reason }) => ({
+        url: `/vendors/applications/${id}/block`,
+        method: 'PATCH',
+        body: { reason: reason || '' },
+      }),
+      transformResponse: (response: ApiResponse<{ application: IVendorApplication; vendorUser: IVendorUserPopulated }>) => response.data,
+      invalidatesTags: ['VendorApplication'],
+    }),
+
+    // Unblock a vendor — restores login and content visibility
+    unblockVendorApplication: builder.mutation<{ application: IVendorApplication; vendorUser: IVendorUserPopulated }, string>({
+      query: (id) => ({
+        url: `/vendors/applications/${id}/unblock`,
+        method: 'PATCH',
+      }),
+      transformResponse: (response: ApiResponse<{ application: IVendorApplication; vendorUser: IVendorUserPopulated }>) => response.data,
+      invalidatesTags: ['VendorApplication'],
+    }),
   }),
 })
 
@@ -216,4 +249,6 @@ export const {
   useApproveVendorApplicationMutation,
   useRejectVendorApplicationMutation,
   useDeleteVendorApplicationMutation,
+  useBlockVendorApplicationMutation,
+  useUnblockVendorApplicationMutation,
 } = vendorApi

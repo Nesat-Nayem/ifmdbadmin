@@ -514,11 +514,20 @@ const WatchVideosAdd = () => {
                   </Col>
                   <Col md={4}>
                     <Form.Group>
-                      <Form.Label>Video Type *</Form.Label>
-                      <Form.Select {...register('videoType')}>
+                      <Form.Label className="fw-bold text-danger d-inline-flex align-items-center gap-1">
+                        <i className="bi bi-exclamation-triangle-fill" />
+                        Web Series OR Movie *
+                      </Form.Label>
+                      <Form.Select
+                        {...register('videoType')}
+                        className="fw-bold border-2 border-danger"
+                      >
                         <option value="single">Single Video / Movie</option>
                         <option value="series">Series / Web Series</option>
                       </Form.Select>
+                      <Form.Text className="text-danger fw-semibold">
+                        Important: choose carefully — this controls whether seasons/episodes are enabled.
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                   <Col md={12}>
