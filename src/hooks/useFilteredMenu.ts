@@ -17,7 +17,14 @@ export const useFilteredMenu = () => {
     }
 
     const userRole: UserRole = user.role || 'user'
-    const vendorServices: VendorService[] = user.vendorServices || []
+    // Prefer `vendorActiveServices` (computed server-side at login based on
+    // subscription status) so that film_trade disappears from the menu as
+    // soon as the subscription expires. Fall back to `vendorServices` for
+    // older sessions that don't yet have the active list populated.
+    const vendorServices: VendorService[] =
+      (user.vendorActiveServices && user.vendorActiveServices.length >= 0
+        ? user.vendorActiveServices
+        : user.vendorServices) || []
 
     // Helper to check if user has access to a menu item
     const hasAccess = (item: MenuItemType): boolean => {

@@ -453,6 +453,25 @@ export const MENU_ITEMS: MenuItemType[] = [
     url: '/profile',
   },
 
+  // ============ SUBSCRIPTION (Film Trade Vendors) ============
+  {
+    key: 'subscription-title',
+    label: 'SUBSCRIPTION',
+    isTitle: true,
+    allowedRoles: ['vendor'],
+  },
+  {
+    key: 'my-subscription',
+    label: 'My Subscription',
+    icon: 'solar:crown-bold-duotone',
+    url: '/subscription',
+    allowedRoles: ['vendor'],
+    // Intentionally NOT restricted by `allowedServices` — a vendor whose
+    // film_trade subscription has expired must still be able to see this
+    // page in order to renew. Non-film-trade vendors won't see it because
+    // the page itself checks whether the vendor has a film_trade service.
+  },
+
   // ============ WALLET (Vendors) ============
   {
     key: 'wallet-title',

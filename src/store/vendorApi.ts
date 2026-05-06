@@ -103,7 +103,7 @@ export const vendorApi = createApi({
       return headers
     },
   }),
-  tagTypes: ['VendorPackage', 'PlatformSetting', 'VendorApplication'],
+  tagTypes: ['VendorPackage', 'PlatformSetting', 'VendorApplication', 'MySubscription'],
   endpoints: (builder) => ({
     // ============ PACKAGES ============
     getVendorPackages: builder.query<IVendorPackage[], { activeOnly?: boolean } | void>({
@@ -230,8 +230,85 @@ export const vendorApi = createApi({
       transformResponse: (response: ApiResponse<{ application: IVendorApplication; vendorUser: IVendorUserPopulated }>) => response.data,
       invalidatesTags: ['VendorApplication'],
     }),
+
+    // ============ MY SUBSCRIPTION (Vendor - Film Trade) ============
+    getMySubscription: builder.query<IMySubscriptionResponse, void>({
+      query: () => '/vendors/my-subscription',
+      transformResponse: (response: ApiResponse<IMySubscriptionResponse>) => response.data,
+      providesTags: ['MySubscription'],
+    }),
+
+    createRenewalOrder: builder.mutation<IRenewalOrderResponse, { packageId: string }>({
+      query: (data) => ({
+        url: '/vendors/my-subscription/renew/create-order',
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: ApiResponse<IRenewalOrderResponse>) => response.data,
+    }),
+
+    verifyRenewal: builder.mutation<
+      { subscriptionEnd: string; lastRenewedAt: string; packageName: string; amount: number },
+      {
+        razorpay_order_id: string
+        razorpay_payment_id: string
+        razorpay_signature: string
+        packageId: string
+      }
+    >({
+      query: (data) => ({
+        url: '/vendors/my-subscription/renew/verify',
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: ApiResponse<any>) => response.data,
+      invalidatesTags: ['MySubscription'],
+    }),
   }),
 })
+
+// ===== Subscription response types =====
+export interface ISubscriptionPaymentEntry {
+  transactionId?: string
+  amount: number
+  status: 'pending' | 'completed' | 'failed'
+  paymentMethod?: string
+  paidAt?: string
+  type: 'initial' | 'renewal'
+  packageId?: string
+  packageName?: string
+  durationDays?: number
+  periodStart?: string
+  periodEnd?: string
+}
+
+export interface IMySubscription {
+  packageId?: string | IVendorPackage
+  packageName?: string
+  subscriptionStart?: string
+  subscriptionEnd?: string
+  status: 'active' | 'expired' | 'pending_payment'
+  daysRemaining: number | null
+  daysOverdue: number | null
+  lastRenewedAt?: string
+  paymentHistory: ISubscriptionPaymentEntry[]
+}
+
+export interface IMySubscriptionResponse {
+  hasFilmTrade: boolean
+  subscription: IMySubscription | null
+  packages: IVendorPackage[]
+}
+
+export interface IRenewalOrderResponse {
+  orderId: string
+  razorpayOrderId: string
+  amount: number
+  currency: string
+  packageId: string
+  packageName: string
+  keyId: string
+}
 
 export const {
   // Packages
@@ -251,4 +328,8 @@ export const {
   useDeleteVendorApplicationMutation,
   useBlockVendorApplicationMutation,
   useUnblockVendorApplicationMutation,
+  // Subscription
+  useGetMySubscriptionQuery,
+  useCreateRenewalOrderMutation,
+  useVerifyRenewalMutation,
 } = vendorApi
