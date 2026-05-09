@@ -22,6 +22,16 @@ interface ILocalSeatType {
   availableSeats: number
 }
 
+// Event Pass Interface - grants access to ALL days of a multi-day event
+interface ILocalEventPass {
+  name: string
+  price: number
+  totalPasses: number
+  availablePasses: number
+  maxPassesPerPerson: number
+  description: string
+}
+
 // Validation Schema
 const schema = yup.object().shape({
   title: yup.string().required('Please enter title'),
@@ -54,6 +64,7 @@ type FormValues = yup.InferType<typeof schema> & {
   performers?: string[]
   organizers?: string[]
   seatTypes?: ILocalSeatType[]
+  eventPasses?: ILocalEventPass[]
   homeSection?: string
 }
 
@@ -87,6 +98,9 @@ const EventsEdit = () => {
   const [seatTypes, setSeatTypes] = useState<ILocalSeatType[]>([
     { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
   ])
+
+  // Event Passes state (multi-day access)
+  const [eventPasses, setEventPasses] = useState<ILocalEventPass[]>([])
 
   const [selectedParticipationType, setSelectedParticipationType] = useState<string>('')
 
@@ -163,6 +177,34 @@ const EventsEdit = () => {
     })
   }
 
+  // === EVENT PASSES ===
+  const addEventPass = () => {
+    setEventPasses(prev => [
+      ...prev,
+      { name: '', price: 0, totalPasses: 0, availablePasses: 0, maxPassesPerPerson: 5, description: '' },
+    ])
+  }
+
+  const removeEventPass = (index: number) => {
+    setEventPasses(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleEventPassChange = (
+    index: number,
+    field: keyof ILocalEventPass,
+    value: string | number,
+  ) => {
+    setEventPasses(prev => {
+      const updated = [...prev]
+      if (field === 'name' || field === 'description') {
+        updated[index] = { ...updated[index], [field]: value as string }
+      } else {
+        updated[index] = { ...updated[index], [field]: Number(value) }
+      }
+      return updated
+    })
+  }
+
   // Pre-fill form when data is fetched
   useEffect(() => {
     if (event) {
@@ -225,6 +267,22 @@ const EventsEdit = () => {
           totalSeats: st.totalSeats || 0,
           availableSeats: st.availableSeats || 0,
         })))
+      }
+
+      // Set event passes (multi-day access)
+      if ((event as any).eventPasses && (event as any).eventPasses.length > 0) {
+        setEventPasses(
+          (event as any).eventPasses.map((ep: any) => ({
+            name: ep.name || '',
+            price: ep.price || 0,
+            totalPasses: ep.totalPasses || 0,
+            availablePasses: ep.availablePasses ?? ep.totalPasses ?? 0,
+            maxPassesPerPerson: ep.maxPassesPerPerson || 5,
+            description: ep.description || '',
+          })),
+        )
+      } else {
+        setEventPasses([])
       }
 
       // Set participation type (first eventCategory from existing event)
@@ -398,6 +456,11 @@ const EventsEdit = () => {
       // Filter out empty seat types
       const validSeatTypes = seatTypes.filter(st => st.name.trim() !== '' && st.totalSeats > 0)
 
+      // Filter out empty event passes
+      const validEventPasses = eventPasses.filter(
+        ep => ep.name.trim() !== '' && ep.totalPasses > 0,
+      )
+
       const payload: any = {
         title: values.title,
         description: values.description,
@@ -415,6 +478,7 @@ const EventsEdit = () => {
         availableSeats: values.availableSeats,
         maxTicketsPerPerson: values.maxTicketsPerPerson || 10,
         seatTypes: validSeatTypes,
+        eventPasses: validEventPasses,
         eventCategories: selectedParticipationType ? [selectedParticipationType] : [],
         isActive: true,
         location: {
@@ -897,6 +961,108 @@ const EventsEdit = () => {
                         ✕
                       </button>
                     )}
+                  </Col>
+                </Row>
+              ))}
+            </CardBody>
+          </Card>
+
+          {/* Event Passes - Multi-day access */}
+          <Card className="mt-4">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <div>
+                <CardTitle as="h4">🎟️ Event Passes (Multi-day Access)</CardTitle>
+                <small className="text-muted">
+                  Optional. A pass grants access to <strong>all days</strong> of the event. Add multiple
+                  tiers (e.g. Silver, Gold, Platinum) each with their own price and stock.
+                </small>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary"
+                onClick={addEventPass}
+              >
+                + Add Event Pass
+              </button>
+            </CardHeader>
+            <CardBody>
+              {eventPasses.length === 0 && (
+                <p className="text-muted mb-0">
+                  <small>
+                    No passes configured. Leave empty if this event does not offer multi-day passes.
+                  </small>
+                </p>
+              )}
+              {eventPasses.map((pass, index) => (
+                <Row key={`eventPass-${index}`} className="align-items-end mb-3">
+                  <Col lg={3}>
+                    <label className="form-label">Pass Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pass.name}
+                      onChange={(e) => handleEventPassChange(index, 'name', e.target.value)}
+                      placeholder="e.g. Gold Pass, Season Pass"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Price</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.price}
+                      onChange={(e) => handleEventPassChange(index, 'price', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Total Passes</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.totalPasses}
+                      onChange={(e) => handleEventPassChange(index, 'totalPasses', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Available</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.availablePasses}
+                      onChange={(e) => handleEventPassChange(index, 'availablePasses', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Max / Person</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.maxPassesPerPerson}
+                      onChange={(e) => handleEventPassChange(index, 'maxPassesPerPerson', e.target.value)}
+                      placeholder="5"
+                    />
+                  </Col>
+                  <Col lg={1}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100"
+                      onClick={() => removeEventPass(index)}
+                    >
+                      ✕
+                    </button>
+                  </Col>
+                  <Col lg={12} className="mt-2">
+                    <label className="form-label">Description (optional)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pass.description}
+                      onChange={(e) => handleEventPassChange(index, 'description', e.target.value)}
+                      placeholder="e.g. Access to all 3 days, lounge entry, free parking"
+                    />
                   </Col>
                 </Row>
               ))}

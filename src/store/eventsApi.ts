@@ -32,6 +32,15 @@ export interface ISeatType {
   availableSeats: number
 }
 
+export interface IEventPass {
+  name: string
+  price: number
+  totalPasses: number
+  availablePasses: number
+  maxPassesPerPerson?: number
+  description?: string
+}
+
 export interface IEvents {
   _id: string
   title: string
@@ -49,6 +58,7 @@ export interface IEvents {
   totalSeats: number
   availableSeats: number
   seatTypes: ISeatType[]
+  eventPasses?: IEventPass[]
   maxTicketsPerPerson: number
   totalTicketsSold: number
   posterImage: string
@@ -263,7 +273,11 @@ export interface IEventBooking {
   userId: { _id: string; name: string; email: string; phone?: string } | string
   bookingReference: string
   quantity: number
+  bookingType?: 'ticket' | 'pass'
   seatType: string
+  eventPass?: string
+  eventCategory?: string
+  attendanceDate?: string | null
   unitPrice: number
   totalAmount: number
   bookingFee: number

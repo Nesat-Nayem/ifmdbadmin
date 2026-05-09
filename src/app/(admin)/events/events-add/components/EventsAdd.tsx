@@ -22,6 +22,16 @@ interface ISeatType {
   availableSeats: number
 }
 
+// Event Pass Interface - grants access to ALL days of a multi-day event
+interface IEventPass {
+  name: string
+  price: number
+  totalPasses: number
+  availablePasses: number
+  maxPassesPerPerson: number
+  description: string
+}
+
 const schema = yup.object().shape({
   title: yup.string().required('Please enter title'),
   description: yup.string().required('Please enter description'),
@@ -66,6 +76,7 @@ type FormValues = yup.InferType<typeof schema> & {
   performers?: string[]
   organizers?: string[]
   seatTypes?: ISeatType[]
+  eventPasses?: IEventPass[]
   homeSection?: string
 }
 
@@ -91,6 +102,9 @@ const EventsAdd = () => {
   const [seatTypes, setSeatTypes] = useState<ISeatType[]>([
     { name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }
   ])
+
+  // Event Passes state (multi-day access)
+  const [eventPasses, setEventPasses] = useState<IEventPass[]>([])
 
   // Event Categories (Participation Types) - single selection from admin-managed list
   const [selectedParticipationType, setSelectedParticipationType] = useState<string>('')
@@ -146,6 +160,39 @@ const EventsAdd = () => {
         // Auto-set availableSeats to totalSeats for new entries
         if (field === 'totalSeats') {
           updated[index].availableSeats = Number(value)
+        }
+      }
+      return updated
+    })
+  }
+
+  // === EVENT PASSES ===
+  const addEventPass = () => {
+    setEventPasses(prev => [
+      ...prev,
+      { name: '', price: 0, totalPasses: 0, availablePasses: 0, maxPassesPerPerson: 5, description: '' },
+    ])
+  }
+
+  const removeEventPass = (index: number) => {
+    setEventPasses(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleEventPassChange = (
+    index: number,
+    field: keyof IEventPass,
+    value: string | number,
+  ) => {
+    setEventPasses(prev => {
+      const updated = [...prev]
+      if (field === 'name' || field === 'description') {
+        updated[index] = { ...updated[index], [field]: value as string }
+      } else {
+        const numValue = Number(value)
+        updated[index] = { ...updated[index], [field]: numValue }
+        // Auto-sync availablePasses with totalPasses for fresh passes
+        if (field === 'totalPasses') {
+          updated[index].availablePasses = numValue
         }
       }
       return updated
@@ -237,6 +284,11 @@ const EventsAdd = () => {
       // Filter out empty seat types
       const validSeatTypes = seatTypes.filter(st => st.name.trim() !== '' && st.totalSeats > 0)
 
+      // Filter out empty event passes
+      const validEventPasses = eventPasses.filter(
+        ep => ep.name.trim() !== '' && ep.totalPasses > 0,
+      )
+
       const payload = {
         ...values,
         categoryId: selectedCat?._id || undefined,
@@ -254,6 +306,7 @@ const EventsAdd = () => {
         videoUrl: videoUrl,
         cloudflareVideoUid: cloudflareVideoUid,
         seatTypes: validSeatTypes,
+        eventPasses: validEventPasses,
         eventCategories: selectedParticipationType ? [selectedParticipationType] : [],
         performers: performers.filter(p => p.name.trim() !== '').map((p) => ({
           name: p.name,
@@ -289,6 +342,7 @@ const EventsAdd = () => {
       setVideoUrl('')
       setCloudflareVideoUid('')
       setSeatTypes([{ name: 'Normal', price: 0, totalSeats: 0, availableSeats: 0 }])
+      setEventPasses([])
       setSelectedParticipationType('')
       
       setTimeout(() => {
@@ -703,6 +757,108 @@ const EventsAdd = () => {
                         ✕
                       </button>
                     )}
+                  </Col>
+                </Row>
+              ))}
+            </CardBody>
+          </Card>
+
+          {/* Event Passes - Multi-day access */}
+          <Card className="mt-4">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <div>
+                <CardTitle as="h4">🎟️ Event Passes (Multi-day Access)</CardTitle>
+                <small className="text-muted">
+                  Optional. A pass grants access to <strong>all days</strong> of the event. Add multiple
+                  tiers (e.g. Silver, Gold, Platinum) each with their own price and stock.
+                </small>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary"
+                onClick={addEventPass}
+              >
+                + Add Event Pass
+              </button>
+            </CardHeader>
+            <CardBody>
+              {eventPasses.length === 0 && (
+                <p className="text-muted mb-0">
+                  <small>
+                    No passes configured. Leave empty if this event does not offer multi-day passes.
+                  </small>
+                </p>
+              )}
+              {eventPasses.map((pass, index) => (
+                <Row key={`eventPass-${index}`} className="align-items-end mb-3">
+                  <Col lg={3}>
+                    <label className="form-label">Pass Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pass.name}
+                      onChange={(e) => handleEventPassChange(index, 'name', e.target.value)}
+                      placeholder="e.g. Gold Pass, Season Pass"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Price</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.price}
+                      onChange={(e) => handleEventPassChange(index, 'price', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Total Passes</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.totalPasses}
+                      onChange={(e) => handleEventPassChange(index, 'totalPasses', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Available</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.availablePasses}
+                      onChange={(e) => handleEventPassChange(index, 'availablePasses', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Col>
+                  <Col lg={2}>
+                    <label className="form-label">Max / Person</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={pass.maxPassesPerPerson}
+                      onChange={(e) => handleEventPassChange(index, 'maxPassesPerPerson', e.target.value)}
+                      placeholder="5"
+                    />
+                  </Col>
+                  <Col lg={1}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100"
+                      onClick={() => removeEventPass(index)}
+                    >
+                      ✕
+                    </button>
+                  </Col>
+                  <Col lg={12} className="mt-2">
+                    <label className="form-label">Description (optional)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={pass.description}
+                      onChange={(e) => handleEventPassChange(index, 'description', e.target.value)}
+                      placeholder="e.g. Access to all 3 days, lounge entry, free parking"
+                    />
                   </Col>
                 </Row>
               ))}
