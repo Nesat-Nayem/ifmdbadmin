@@ -29,6 +29,8 @@ interface ILocalEventPass {
   totalPasses: number
   availablePasses: number
   maxPassesPerPerson: number
+  foodIncluded: boolean
+  parkingAvailable: boolean
   description: string
 }
 
@@ -181,7 +183,16 @@ const EventsEdit = () => {
   const addEventPass = () => {
     setEventPasses(prev => [
       ...prev,
-      { name: '', price: 0, totalPasses: 0, availablePasses: 0, maxPassesPerPerson: 5, description: '' },
+      {
+        name: '',
+        price: 0,
+        totalPasses: 0,
+        availablePasses: 0,
+        maxPassesPerPerson: 5,
+        foodIncluded: false,
+        parkingAvailable: false,
+        description: '',
+      },
     ])
   }
 
@@ -192,12 +203,14 @@ const EventsEdit = () => {
   const handleEventPassChange = (
     index: number,
     field: keyof ILocalEventPass,
-    value: string | number,
+    value: string | number | boolean,
   ) => {
     setEventPasses(prev => {
       const updated = [...prev]
       if (field === 'name' || field === 'description') {
         updated[index] = { ...updated[index], [field]: value as string }
+      } else if (field === 'foodIncluded' || field === 'parkingAvailable') {
+        updated[index] = { ...updated[index], [field]: !!value }
       } else {
         updated[index] = { ...updated[index], [field]: Number(value) }
       }
@@ -278,6 +291,8 @@ const EventsEdit = () => {
             totalPasses: ep.totalPasses || 0,
             availablePasses: ep.availablePasses ?? ep.totalPasses ?? 0,
             maxPassesPerPerson: ep.maxPassesPerPerson || 5,
+            foodIncluded: !!ep.foodIncluded,
+            parkingAvailable: !!ep.parkingAvailable,
             description: ep.description || '',
           })),
         )
@@ -1054,7 +1069,40 @@ const EventsEdit = () => {
                       ✕
                     </button>
                   </Col>
-                  <Col lg={12} className="mt-2">
+                  <Col lg={6} className="mt-2">
+                    <label className="form-label d-block">Perks</label>
+                    <div className="d-flex gap-3 flex-wrap">
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`pass-food-edit-${index}`}
+                          checked={!!pass.foodIncluded}
+                          onChange={(e) =>
+                            handleEventPassChange(index, 'foodIncluded', e.target.checked)
+                          }
+                        />
+                        <label className="form-check-label" htmlFor={`pass-food-edit-${index}`}>
+                          🍽️ Food Included
+                        </label>
+                      </div>
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`pass-parking-edit-${index}`}
+                          checked={!!pass.parkingAvailable}
+                          onChange={(e) =>
+                            handleEventPassChange(index, 'parkingAvailable', e.target.checked)
+                          }
+                        />
+                        <label className="form-check-label" htmlFor={`pass-parking-edit-${index}`}>
+                          🅿️ Parking Available
+                        </label>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col lg={6} className="mt-2">
                     <label className="form-label">Description (optional)</label>
                     <input
                       type="text"

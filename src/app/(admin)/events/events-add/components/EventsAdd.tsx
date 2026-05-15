@@ -29,6 +29,8 @@ interface IEventPass {
   totalPasses: number
   availablePasses: number
   maxPassesPerPerson: number
+  foodIncluded: boolean
+  parkingAvailable: boolean
   description: string
 }
 
@@ -170,7 +172,16 @@ const EventsAdd = () => {
   const addEventPass = () => {
     setEventPasses(prev => [
       ...prev,
-      { name: '', price: 0, totalPasses: 0, availablePasses: 0, maxPassesPerPerson: 5, description: '' },
+      {
+        name: '',
+        price: 0,
+        totalPasses: 0,
+        availablePasses: 0,
+        maxPassesPerPerson: 5,
+        foodIncluded: false,
+        parkingAvailable: false,
+        description: '',
+      },
     ])
   }
 
@@ -181,12 +192,14 @@ const EventsAdd = () => {
   const handleEventPassChange = (
     index: number,
     field: keyof IEventPass,
-    value: string | number,
+    value: string | number | boolean,
   ) => {
     setEventPasses(prev => {
       const updated = [...prev]
       if (field === 'name' || field === 'description') {
         updated[index] = { ...updated[index], [field]: value as string }
+      } else if (field === 'foodIncluded' || field === 'parkingAvailable') {
+        updated[index] = { ...updated[index], [field]: !!value }
       } else {
         const numValue = Number(value)
         updated[index] = { ...updated[index], [field]: numValue }
@@ -850,7 +863,40 @@ const EventsAdd = () => {
                       ✕
                     </button>
                   </Col>
-                  <Col lg={12} className="mt-2">
+                  <Col lg={6} className="mt-2">
+                    <label className="form-label d-block">Perks</label>
+                    <div className="d-flex gap-3 flex-wrap">
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`pass-food-${index}`}
+                          checked={!!pass.foodIncluded}
+                          onChange={(e) =>
+                            handleEventPassChange(index, 'foodIncluded', e.target.checked)
+                          }
+                        />
+                        <label className="form-check-label" htmlFor={`pass-food-${index}`}>
+                          🍽️ Food Included
+                        </label>
+                      </div>
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`pass-parking-${index}`}
+                          checked={!!pass.parkingAvailable}
+                          onChange={(e) =>
+                            handleEventPassChange(index, 'parkingAvailable', e.target.checked)
+                          }
+                        />
+                        <label className="form-check-label" htmlFor={`pass-parking-${index}`}>
+                          🅿️ Parking Available
+                        </label>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col lg={6} className="mt-2">
                     <label className="form-label">Description (optional)</label>
                     <input
                       type="text"

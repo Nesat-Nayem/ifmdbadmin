@@ -38,6 +38,8 @@ export interface IEventPass {
   totalPasses: number
   availablePasses: number
   maxPassesPerPerson?: number
+  foodIncluded?: boolean
+  parkingAvailable?: boolean
   description?: string
 }
 
@@ -276,6 +278,11 @@ export interface IEventBooking {
   bookingType?: 'ticket' | 'pass'
   seatType: string
   eventPass?: string
+  passPerks?: {
+    foodIncluded: boolean
+    parkingAvailable: boolean
+    description: string
+  }
   eventCategory?: string
   attendanceDate?: string | null
   unitPrice: number
